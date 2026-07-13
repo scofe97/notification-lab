@@ -1,0 +1,98 @@
+# notification-lab 관측 스택 (Phase 3 — LGMT Observability 스터디용 스켈레톤)
+#
+# ⚠️ 아직 기동 대상이 아닙니다. 서비스 골격(이미지·포트·마운트)만 잡아둔 상태이고,
+#    마운트되는 설정 파일들(loki/·mimir/·tempo/·alloy/·grafana/)이 빈 placeholder라
+#    지금 up 하면 설정 파싱 단계에서 실패합니다. 설정은 Phase 3 2주차(관측 연결)에 채웁니다.
+#    계획: ROADMAP.md Phase 3 · 목표 아키텍처: a-notification/docs/03-architecture.md §9
+#
+# 기동(Phase 3 이후): docker compose -f infra/docker-compose.yml -f infra/docker-compose.lgmt.yml up -d
+#   → 같은 프로젝트명(notification-lab)이라 핵심 스택과 한 네트워크로 합쳐집니다.
+#
+# 이미지 버전은 스켈레톤 작성 시점(2026-07) 기준. Phase 3 착수 시 최신 안정판 재확인.
+
+name: notification-lab
+
+services:
+  # ── Loki — 로그 저장·검색 ──
+  loki:
+    image: grafana/loki:3.1.0
+    container_name: nlab-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+
+  # ── Mimir — 메트릭 저장·쿼리 (Prometheus 호환) ──
+  # 단순 시작이 필요하면 Phase 3에서 Prometheus 단독으로 대체 후 Mimir 전환도 가능.
+  mimir:
+    image: grafana/mimir:2.13.0
+    container_name: nlab-mimir
+    ports:
+      - "9009:8080"
+    volumes:
+      - ./mimir/mimir-config.yml:/etc/mimir/mimir.yaml:ro
+    command: ["-config.file=/etc/mimir/mimir.yaml"]
+
+  # ── Tempo — 트레이스 저장·조회 ──
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: nlab-tempo
+    ports:
+      - "3200:3200"    # Tempo HTTP (쿼리)
+    volumes:
+      - ./tempo/tempo-config.yml:/etc/tempo/tempo.yaml:ro
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+
+  # ── Grafana Alloy — 수집·변환·라우팅 (OTel Collector 배포판) ──
+  # 앱(호스트의 notification-service)이 OTLP를 여기로 쏘고, Alloy가 L/M/T로 라우팅.
+  alloy:
+    image: grafana/alloy:v1.3.0
+    container_name: nlab-alloy
+    ports:
+      - "4317:4317"    # OTLP gRPC (앱 → Alloy)
+      - "4318:4318"    # OTLP HTTP (앱 → Alloy)
+      - "12345:12345"  # Alloy UI
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+    command: ["run", "/etc/alloy/config.alloy", "--server.http.listen-addr=0.0.0.0:12345"]
+    depends_on:
+      - loki
+      - mimir
+      - tempo
+
+  # ── Grafana — Dashboard·Explore·Alert ──
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: nlab-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - loki
+      - mimir
+      - tempo
+
+  # ── MariaDB — Phase 3에서 H2를 대체 (cache miss → DB latency → HikariCP 신호 관측용) ──
+  # 포트 3306이 로컬에서 충돌하면 13307 등으로 변경 (다른 로컬 DB 컨테이너가 13306을 쓸 수 있음).
+  mariadb:
+    image: mariadb:11.4
+    container_name: nlab-mariadb
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: "practice"
+      MARIADB_DATABASE: "notification"
+    volumes:
+      - ./mariadb/init:/docker-entrypoint-initdb.d:ro
+
+  # ── Scenario Runner — 장애·부하 발생 서버 (Phase 3 신규 앱, 빌드 후 추가) ──
+  # 코드가 아직 없어 서비스 정의도 보류. apps/scenario-runner 구현 후 여기에 추가.
+  # scenario-runner:
+  #   build: ../apps/scenario-runner
+  #   ports:
+  #     - "8094:8094"

@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+
+# 백업 잔여물
+*.zip
+
+# Gradle 산출물 (a-notification 하위 .gitignore와 이중 방어)
+a-notification/build/
+a-notification/.gradle/

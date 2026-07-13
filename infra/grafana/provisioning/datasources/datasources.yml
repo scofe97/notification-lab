@@ -1,0 +1,2 @@
+# Grafana 데이터소스 프로비저닝 — Phase 3 2주차에 작성 (TODO)
+# Loki(http://loki:3100) · Mimir(http://mimir:8080/prometheus) · Tempo(http://tempo:3200) 연결 예정

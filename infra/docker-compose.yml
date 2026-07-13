@@ -1,0 +1,102 @@
+# notification-lab 공용 인프라 (핵심 스택 — 지금 사용)
+# 원본·사내 CMP 플랫폼 개념 재현에 필요한 오픈소스 인프라를 로컬 단일 스택으로 기동합니다.
+# 포트는 원본 실물(8091)·플레이그라운드(8070)와 겹치지 않게 잡았습니다.
+#
+# 기동:  docker compose -f infra/docker-compose.yml up -d     (repo 루트에서)
+# 종료:  docker compose -f infra/docker-compose.yml down       (데이터 유지: 볼륨 남김)
+# 초기화: docker compose -f infra/docker-compose.yml down -v    (볼륨까지 삭제)
+#
+# Phase 3(LGMT) 관측 스택은 docker-compose.lgmt.yml — 별도 파일(스켈레톤).
+
+# compose 파일이 infra/ 안에 있어 디렉토리 기반 프로젝트명이 infra로 잡히는 것을 방지.
+name: notification-lab
+
+services:
+  # ── Kafka (KRaft 모드, Zookeeper 불필요) — 알림 이벤트 버스 ──
+  # 공식 apache/kafka 이미지 사용 (bitnami는 태그 정책 변경으로 불안정)
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: nlab-kafka
+    ports:
+      # 9092는 다른 학습 프로젝트(redpanda-local)가 점유 → 9192로 회피
+      - "9192:9092"   # 호스트(앱)용 리스너
+    environment:
+      KAFKA_NODE_ID: "0"
+      KAFKA_PROCESS_ROLES: "controller,broker"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "0@kafka:9093"
+      KAFKA_LISTENERS: "PLAINTEXT://:9094,CONTROLLER://:9093,EXTERNAL://:9092"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9094,EXTERNAL://localhost:9192"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      # 컨테이너 내부에서는 내부 리스너(kafka:9094)로 확인한다.
+      # EXTERNAL(:9092)은 localhost:9192로 advertise 되어 컨테이너 안에서는 닿지 않는다.
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9094 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  # ── kafka-ui — 토픽·메시지 확인 (원본 kafka-ui 대응) ──
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: nlab-kafka-ui
+    ports:
+      - "8100:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "local"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9094"
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  # ── Redis — Resilience4j/캐시 실험 여지 (a1 필수 아님) ──
+  redis:
+    image: redis:7.4-alpine
+    container_name: nlab-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── OpenSearch (single-node) — 이력 색인·조회 (a2에서 사용) ──
+  opensearch:
+    image: opensearchproject/opensearch:2.11.1
+    container_name: nlab-opensearch
+    ports:
+      - "9200:9200"
+    environment:
+      discovery.type: "single-node"
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # ── MailHog — 메일 수신 확인 (NCP SENS 메일 대체, a2) ──
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: nlab-mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # 웹 UI
+
+  # ── WireMock — SMS·알림톡·조직 API 목 (NCP SENS·CMP 조직 API 대체) ──
+  wiremock:
+    image: wiremock/wiremock:3.9.1
+    container_name: nlab-wiremock
+    ports:
+      - "8110:8080"
+    # 기본 스텁: 발송 성공 응답. mappings/ 폴더를 마운트해 커스텀 가능.
+    volumes:
+      # compose 파일이 infra/ 안에 있으므로 상대경로도 infra/ 기준
+      - ./wiremock:/home/wiremock
+    command: ["--global-response-templating", "--verbose"]
