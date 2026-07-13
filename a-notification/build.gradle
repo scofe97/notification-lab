@@ -1,0 +1,76 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.practice'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    // 원본 실제 스택은 Java 21. 시스템 기본이 25여도 toolchain으로 21을 강제합니다.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    // 원본 build.gradle 기준 Spring Cloud 2025.0.0
+    springCloudVersion = '2025.0.0'
+}
+
+dependencies {
+    // ── 웹 (Undertow — Tomcat 제거 후 교체, 원본과 동일) ──
+    implementation('org.springframework.boot:spring-boot-starter-web') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+    }
+    implementation 'org.springframework.boot:spring-boot-starter-undertow'
+
+    // ── Kafka 소비 (사내 Kafka 라이브러리 @TopicHandler 대체) ──
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    // ── 선언적 HTTP (OpenFeign) ──
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+    // ── 회로차단 (Resilience4j) ──
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3'
+
+    // ── 캐시 (Caffeine) ──
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+
+    // ── 데이터 (채널 설정 — H2 파일모드, 원본과 동일) ──
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'com.h2database:h2'
+
+    // ── 기타 ──
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // ── 테스트 ──
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:kafka'
+    testImplementation 'org.wiremock:wiremock-standalone:3.9.1'
+    testImplementation 'org.awaitility:awaitility'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        mavenBom "org.testcontainers:testcontainers-bom:1.20.4"
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
