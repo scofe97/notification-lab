@@ -8,6 +8,6 @@
 # 백업 잔여물
 *.zip
 
-# Gradle 산출물 (a-notification 하위 .gitignore와 이중 방어)
-a-notification/build/
-a-notification/.gradle/
+# Gradle 산출물 (각 앱 하위 .gitignore와 이중 방어)
+apps/*/build/
+apps/*/.gradle/

@@ -1,7 +1,7 @@
 {
   "mappings": [
     {
-      "name": "발송 성공 (SMS/알림톡/메일 공통) — NCP SENS 발송 API 대체",
+      "name": "발송 성공 (SMS/알림톡/메일 공통)",
       "request": {
         "method": "POST",
         "urlPathPattern": "/send/(sms|alimtalk|email)"

@@ -1,0 +1,9 @@
+services:
+  wiremock:
+    image: wiremock/wiremock:3.9.1
+    container_name: nlab-wiremock
+    ports:
+      - "8110:8080"
+    volumes:
+      - ../wiremock:/home/wiremock
+    command: ["--global-response-templating", "--verbose"]

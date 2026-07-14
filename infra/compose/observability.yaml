@@ -1,0 +1,62 @@
+services:
+  loki:
+    image: grafana/loki:3.1.0
+    container_name: nlab-loki
+    profiles: ["observability"]
+    ports:
+      - "3100:3100"
+    volumes:
+      - ../loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+
+  mimir:
+    image: grafana/mimir:2.13.0
+    container_name: nlab-mimir
+    profiles: ["observability"]
+    ports:
+      - "9009:8080"
+    volumes:
+      - ../mimir/mimir-config.yml:/etc/mimir/mimir.yaml:ro
+    command: ["-config.file=/etc/mimir/mimir.yaml"]
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: nlab-tempo
+    profiles: ["observability"]
+    ports:
+      - "3200:3200"
+    volumes:
+      - ../tempo/tempo-config.yml:/etc/tempo/tempo.yaml:ro
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+
+  alloy:
+    image: grafana/alloy:v1.3.0
+    container_name: nlab-alloy
+    profiles: ["observability"]
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "12345:12345"
+    volumes:
+      - ../alloy/config.alloy:/etc/alloy/config.alloy:ro
+    command: ["run", "/etc/alloy/config.alloy", "--server.http.listen-addr=0.0.0.0:12345"]
+    depends_on:
+      - loki
+      - mimir
+      - tempo
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: nlab-grafana
+    profiles: ["observability"]
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+    volumes:
+      - ../grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - loki
+      - mimir
+      - tempo

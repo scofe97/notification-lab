@@ -1,0 +1,10 @@
+name: notification-lab
+
+include:
+  - path: compose/kafka.yaml
+  - path: compose/opensearch.yaml
+  - path: compose/redis.yaml
+  - path: compose/mailhog.yaml
+  - path: compose/wiremock.yaml
+  - path: compose/mariadb.yaml
+  - path: compose/observability.yaml
