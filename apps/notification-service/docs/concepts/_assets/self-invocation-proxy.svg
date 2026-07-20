@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 450" width="900" height="450" role="img" aria-label="self-invocation이 프록시를 우회하는 구조와 별도 빈으로 분리한 구조 비교">
+  <title>self-invocation 프록시 우회 대비</title>
+  <desc>왼쪽은 같은 객체 안에서 자기 메서드를 호출해 프록시를 우회하므로 어노테이션이 적용되지 않는 구조이고, 오른쪽은 호출 대상을 별도 빈으로 분리해 호출이 프록시를 거치는 구조입니다. 실측에서 왼쪽은 24건 연속 실패에도 차단이 0회였고, 오른쪽은 5건에서 회로가 열렸습니다.</desc>
+
+  <style>
+    .lbl { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 13px; font-weight: 600; }
+    .sub { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+    .note { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 11px; }
+    .hdr { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; }
+    .edge { stroke: #8a8580; stroke-width: 1.8; fill: none; marker-end: url(#a3); }
+    .edge-skip { stroke: #c0656a; stroke-width: 1.8; fill: none; stroke-dasharray: 5 4; marker-end: url(#a3f); }
+  </style>
+
+  <defs>
+    <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a8580"/>
+    </marker>
+    <marker id="a3f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c0656a"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="900" height="450" fill="#0d0d0d"/>
+  <line x1="450" y1="30" x2="450" y2="400" stroke="#2a2a2a" stroke-width="1"/>
+
+  <text class="hdr" x="40" y="40" fill="#c0656a">무력화 — 같은 객체 안에서 호출</text>
+  <text class="hdr" x="490" y="40" fill="#66bb6a">동작 — 별도 빈으로 분리</text>
+
+  <!-- 왼쪽: 프록시 우회 -->
+  <rect x="40" y="58" width="370" height="46" rx="6" fill="#0d0d0d" stroke="#8a8580" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text class="sub" x="225" y="86" text-anchor="middle" fill="#b8b3ad">Spring 프록시 (@CircuitBreaker advice)</text>
+
+  <rect x="70" y="130" width="310" height="150" rx="6" fill="#f2d4d4" stroke="#f2d4d4" stroke-width="1.5"/>
+  <text class="lbl" x="225" y="156" text-anchor="middle" fill="#0d0d0d">NotificationSendService</text>
+  <rect x="96" y="172" width="258" height="40" rx="4" fill="#fdf3df" stroke="#fdf3df"/>
+  <text class="sub" x="225" y="196" text-anchor="middle" fill="#0d0d0d" font-weight="700">sendChannel()</text>
+  <rect x="96" y="226" width="258" height="40" rx="4" fill="#fdf3df" stroke="#fdf3df"/>
+  <text class="sub" x="225" y="250" text-anchor="middle" fill="#0d0d0d" font-weight="700">@CircuitBreaker callSend()</text>
+
+  <path class="edge-skip" d="M 225 212 L 225 222"/>
+  <text class="note" x="225" y="300" text-anchor="middle" fill="#c0656a">내부 호출은 프록시를 거치지 않는다</text>
+  <text class="note" x="225" y="322" text-anchor="middle" fill="#c0656a">→ advice 미적용, 조용히 무시됨</text>
+
+  <rect x="70" y="342" width="310" height="46" rx="6" fill="#f2d4d4" stroke="#f2d4d4" stroke-width="1.5"/>
+  <text class="sub" x="225" y="362" text-anchor="middle" fill="#7a1f1f" font-weight="700">실측: 24건 연속 실패 → 차단 0회</text>
+  <text class="sub" x="225" y="378" text-anchor="middle" fill="#7a1f1f">bufferedCalls 0에서 증가하지 않음</text>
+
+  <!-- 오른쪽: 프록시 경유 -->
+  <rect x="490" y="58" width="370" height="46" rx="6" fill="#0d0d0d" stroke="#66bb6a" stroke-width="1.5"/>
+  <text class="sub" x="675" y="86" text-anchor="middle" fill="#e8e4df">Spring 프록시 (@CircuitBreaker advice)</text>
+
+  <rect x="500" y="130" width="165" height="150" rx="6" fill="#dceaf7" stroke="#dceaf7" stroke-width="1.5"/>
+  <text class="lbl" x="582" y="156" text-anchor="middle" fill="#0d0d0d">SendService</text>
+  <rect x="516" y="196" width="133" height="40" rx="4" fill="#f5edda" stroke="#f5edda"/>
+  <text class="sub" x="582" y="220" text-anchor="middle" fill="#0d0d0d" font-weight="700">sendChannel()</text>
+
+  <rect x="695" y="130" width="165" height="150" rx="6" fill="#cdeccf" stroke="#cdeccf" stroke-width="1.5"/>
+  <text class="lbl" x="777" y="156" text-anchor="middle" fill="#0d0d0d">SendCaller</text>
+  <rect x="711" y="196" width="133" height="40" rx="4" fill="#e6f7e7" stroke="#e6f7e7"/>
+  <text class="sub" x="777" y="215" text-anchor="middle" fill="#14521d" font-weight="700">@CircuitBreaker</text>
+  <text class="sub" x="777" y="229" text-anchor="middle" fill="#14521d" font-weight="700">callSend()</text>
+
+  <path class="edge" d="M 665 216 L 691 216"/>
+  <path class="edge" d="M 777 130 L 777 108"/>
+
+  <text class="note" x="675" y="300" text-anchor="middle" fill="#66bb6a">다른 빈이므로 호출이 프록시를 통과한다</text>
+  <text class="note" x="675" y="322" text-anchor="middle" fill="#66bb6a">→ advice 적용, 실패가 집계된다</text>
+
+  <rect x="490" y="342" width="370" height="46" rx="6" fill="#cdeccf" stroke="#cdeccf" stroke-width="1.5"/>
+  <text class="sub" x="675" y="362" text-anchor="middle" fill="#14521d" font-weight="700">실측: 5건 실패 → OPEN, 차단 6회</text>
+  <text class="sub" x="675" y="378" text-anchor="middle" fill="#14521d">bufferedCalls 5, failureRate 100%</text>
+
+  <text class="note" x="40" y="425" fill="#b8b3ad">AOP 스타터가 없으면 오른쪽 구조여도 aspect 자체가 등록되지 않습니다. 둘 다 컴파일 경고 없이 통과합니다.</text>
+</svg>

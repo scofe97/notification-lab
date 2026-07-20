@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" width="900" height="400" role="img" aria-label="파티션 로그 위의 세 가지 표식">
+  <title>파티션 로그 위의 세 가지 표식</title>
+  <desc>같은 파티션 로그 위에 로그 시작 오프셋, 커밋된 오프셋, 하이 워터마크가 각각 다른 주체의 소유로 놓입니다. 재시도와 유실을 결정하는 것은 컨슈머 그룹이 관리하는 커밋된 오프셋뿐입니다.</desc>
+
+  <style>
+    .lbl { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 12px; font-weight: 600; }
+    .sub { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+    .note { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 11px; fill: #b8b3ad; }
+    .num { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; fill: #8a8580; }
+    .own { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; }
+  </style>
+
+  <rect x="0" y="0" width="900" height="400" fill="#0d0d0d"/>
+
+  <text class="lbl" x="40" y="42" fill="#e8e4df">파티션 로그 (notification-0)</text>
+
+  <!-- 로그 셀 -->
+  <g>
+    <rect x="40" y="60" width="70" height="52" rx="4" fill="#2a2a2a" stroke="#3a3a3a"/>
+    <rect x="115" y="60" width="70" height="52" rx="4" fill="#2a2a2a" stroke="#3a3a3a"/>
+    <rect x="190" y="60" width="70" height="52" rx="4" fill="#5b9bd5" stroke="#5b9bd5"/>
+    <rect x="265" y="60" width="70" height="52" rx="4" fill="#5b9bd5" stroke="#5b9bd5"/>
+    <rect x="340" y="60" width="70" height="52" rx="4" fill="#5b9bd5" stroke="#5b9bd5"/>
+    <rect x="415" y="60" width="70" height="52" rx="4" fill="rgb(212,168,83)" stroke="rgb(212,168,83)"/>
+    <rect x="490" y="60" width="70" height="52" rx="4" fill="rgb(212,168,83)" stroke="rgb(212,168,83)"/>
+    <rect x="565" y="60" width="70" height="52" rx="4" fill="rgb(212,168,83)" stroke="rgb(212,168,83)"/>
+    <rect x="640" y="60" width="70" height="52" rx="4" fill="#0d0d0d" stroke="#4a4a4a" stroke-dasharray="3 3"/>
+    <rect x="715" y="60" width="70" height="52" rx="4" fill="#0d0d0d" stroke="#4a4a4a" stroke-dasharray="3 3"/>
+  </g>
+
+  <text class="sub" x="75" y="92" text-anchor="middle" fill="#6a6a6a">삭제됨</text>
+  <text class="sub" x="150" y="92" text-anchor="middle" fill="#6a6a6a">삭제됨</text>
+  <text class="sub" x="225" y="92" text-anchor="middle" fill="#e8e4df">처리완료</text>
+  <text class="sub" x="300" y="92" text-anchor="middle" fill="#e8e4df">처리완료</text>
+  <text class="sub" x="375" y="92" text-anchor="middle" fill="#e8e4df">처리완료</text>
+  <text class="sub" x="450" y="92" text-anchor="middle" fill="#0d0d0d">미처리</text>
+  <text class="sub" x="525" y="92" text-anchor="middle" fill="#0d0d0d">미처리</text>
+  <text class="sub" x="600" y="92" text-anchor="middle" fill="#0d0d0d">미처리</text>
+  <text class="sub" x="675" y="92" text-anchor="middle" fill="#6a6a6a">복제중</text>
+  <text class="sub" x="750" y="92" text-anchor="middle" fill="#6a6a6a">복제중</text>
+
+  <text class="num" x="75" y="130" text-anchor="middle">10</text>
+  <text class="num" x="150" y="130" text-anchor="middle">11</text>
+  <text class="num" x="225" y="130" text-anchor="middle">12</text>
+  <text class="num" x="300" y="130" text-anchor="middle">13</text>
+  <text class="num" x="375" y="130" text-anchor="middle">14</text>
+  <text class="num" x="450" y="130" text-anchor="middle">15</text>
+  <text class="num" x="525" y="130" text-anchor="middle">16</text>
+  <text class="num" x="600" y="130" text-anchor="middle">17</text>
+  <text class="num" x="675" y="130" text-anchor="middle">18</text>
+  <text class="num" x="750" y="130" text-anchor="middle">19</text>
+
+  <!-- 표식 1: 로그 시작 오프셋 -->
+  <line x1="190" y1="150" x2="190" y2="186" stroke="#8a8580" stroke-width="2"/>
+  <rect x="118" y="186" width="220" height="54" rx="5" fill="#f5edda" stroke="#f5edda"/>
+  <text class="own" x="228" y="206" text-anchor="middle" fill="#7a5a1f">브로커 소유</text>
+  <text class="lbl" x="228" y="224" text-anchor="middle" fill="#0d0d0d">로그 시작 오프셋 = 12</text>
+
+  <!-- 표식 2: 커밋된 오프셋 -->
+  <line x1="415" y1="150" x2="415" y2="186" stroke="#66bb6a" stroke-width="2.5"/>
+  <rect x="343" y="186" width="220" height="72" rx="5" fill="#cdeccf" stroke="#cdeccf"/>
+  <text class="own" x="453" y="206" text-anchor="middle" fill="#14521d">컨슈머 그룹 소유</text>
+  <text class="lbl" x="453" y="224" text-anchor="middle" fill="#0d0d0d">커밋된 오프셋 = 15</text>
+  <text class="sub" x="453" y="244" text-anchor="middle" fill="#14521d">재시도·유실을 결정한다</text>
+
+  <!-- 표식 3: 하이 워터마크 -->
+  <line x1="640" y1="150" x2="640" y2="186" stroke="#8a8580" stroke-width="2"/>
+  <rect x="568" y="186" width="220" height="54" rx="5" fill="#f5edda" stroke="#f5edda"/>
+  <text class="own" x="678" y="206" text-anchor="middle" fill="#7a5a1f">브로커 소유</text>
+  <text class="lbl" x="678" y="224" text-anchor="middle" fill="#0d0d0d">하이 워터마크 = 18</text>
+
+  <!-- 비유 -->
+  <rect x="40" y="290" width="820" height="60" rx="6" fill="#dceaf7" stroke="#dceaf7"/>
+  <text class="lbl" x="60" y="314" fill="#0d0d0d">책에 비유하면</text>
+  <text class="sub" x="60" y="336" fill="#10243a">쪽 번호 = 오프셋 · 내 책갈피 = 커밋된 오프셋 · 출판사가 앞부분을 파기한 지점 = 로그 시작 오프셋</text>
+
+  <text class="note" x="40" y="378">워터마크는 컨슈머가 읽었든 말든 브로커 사정으로 움직입니다. "어디까지 처리했나"에 답하는 것은 커밋된 오프셋뿐입니다.</text>
+</svg>

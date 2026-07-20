@@ -11,6 +11,8 @@
 
 ## 관련 문서
 
+> 개념의 근거가 된 구현·검증 기록으로 돌아가는 링크입니다.
+
 - 구조와 인프라 구성: [03-architecture.md](../03-architecture.md)
 - UC별 리뷰 렌즈와 관찰법: [uc/00-index.md](../uc/00-index.md)
 - 이해 루프 기록(실측 근거): [learning/00-index.md](../learning/00-index.md)

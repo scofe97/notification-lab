@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="500 응답이 실패로 번역되는 사슬">
+  <title>500 응답이 실패로 번역되는 사슬</title>
+  <desc>WireMock이 상태코드 500을 응답하면 Feign의 ErrorDecoder가 그것을 FeignException으로 던지고, CircuitBreaker는 HTTP 코드가 아니라 그 예외 발생만 보고 실패로 집계합니다. 실패의 정의는 프로토콜이 아니라 클라이언트 코드가 정합니다.</desc>
+
+  <style>
+    .lbl { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 13px; font-weight: 600; }
+    .sub { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+    .note { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 11px; fill: #b8b3ad; }
+    .step { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 11px; font-weight: 700; fill: #8a8580; letter-spacing: 0.06em; }
+    .edge { stroke: #8a8580; stroke-width: 1.8; fill: none; marker-end: url(#a2); }
+  </style>
+
+  <defs>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a8580"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="900" height="420" fill="#0d0d0d"/>
+
+  <text class="step" x="40" y="40">① 프로토콜 — 숫자일 뿐</text>
+  <text class="step" x="340" y="40">② 클라이언트 — 여기서 실패가 정의된다</text>
+  <text class="step" x="660" y="40">③ 집계 — 예외만 본다</text>
+
+  <!-- WireMock -->
+  <rect x="40" y="58" width="230" height="88" rx="6" fill="#0d0d0d" stroke="#8a8580" stroke-width="1.5"/>
+  <text class="lbl" x="155" y="86" text-anchor="middle" fill="#e8e4df">WireMock</text>
+  <text class="sub" x="155" y="106" text-anchor="middle" fill="#b8b3ad">HTTP/1.1 500</text>
+  <text class="sub" x="155" y="124" text-anchor="middle" fill="#b8b3ad">상태코드는 데이터다</text>
+
+  <!-- Feign -->
+  <rect x="340" y="58" width="250" height="88" rx="6" fill="rgb(212,168,83)" stroke="rgb(212,168,83)" stroke-width="1.5"/>
+  <text class="lbl" x="465" y="86" text-anchor="middle" fill="#0d0d0d">Feign · ErrorDecoder</text>
+  <text class="sub" x="465" y="106" text-anchor="middle" fill="#1a1a1a">2xx 밖 → 예외로 번역</text>
+  <text class="sub" x="465" y="124" text-anchor="middle" fill="#1a1a1a">throw FeignException</text>
+
+  <!-- CircuitBreaker -->
+  <rect x="660" y="58" width="200" height="88" rx="6" fill="#66bb6a" stroke="#66bb6a" stroke-width="1.5"/>
+  <text class="lbl" x="760" y="86" text-anchor="middle" fill="#0d0d0d">CircuitBreaker</text>
+  <text class="sub" x="760" y="106" text-anchor="middle" fill="#1a1a1a">메서드가 예외로 끝났나</text>
+  <text class="sub" x="760" y="124" text-anchor="middle" fill="#1a1a1a">failedCalls += 1</text>
+
+  <path class="edge" d="M 270 102 L 336 102"/>
+  <path class="edge" d="M 590 102 L 656 102"/>
+
+  <!-- 하단: 실패의 정의를 바꾸면 -->
+  <text class="step" x="40" y="212">실패의 정의를 바꾸면 사슬이 끊긴다</text>
+
+  <rect x="40" y="230" width="380" height="120" rx="6" fill="#dceaf7" stroke="#dceaf7" stroke-width="1.5"/>
+  <text class="lbl" x="230" y="258" text-anchor="middle" fill="#0d0d0d">기본 동작</text>
+  <text class="sub" x="230" y="282" text-anchor="middle" fill="#10243a">4xx · 5xx → FeignException</text>
+  <text class="sub" x="230" y="302" text-anchor="middle" fill="#10243a">회로가 실패를 센다</text>
+  <text class="sub" x="230" y="326" text-anchor="middle" fill="#10243a">반복되면 OPEN 전이</text>
+
+  <rect x="480" y="230" width="380" height="120" rx="6" fill="#f2d4d4" stroke="#f2d4d4" stroke-width="1.5"/>
+  <text class="lbl" x="670" y="258" text-anchor="middle" fill="#0d0d0d">ErrorDecoder를 바꾸면</text>
+  <text class="sub" x="670" y="282" text-anchor="middle" fill="#7a1f1f">5xx를 정상 반환으로 처리</text>
+  <text class="sub" x="670" y="302" text-anchor="middle" fill="#7a1f1f">예외가 없으니 집계도 없다</text>
+  <text class="sub" x="670" y="326" text-anchor="middle" fill="#7a1f1f">외부가 죽어도 회로는 닫힌 채</text>
+
+  <text class="note" x="40" y="390">회로차단기는 HTTP 코드를 직접 보지 않습니다. 무엇을 실패로 볼지는 클라이언트 코드가 정합니다.</text>
+</svg>
