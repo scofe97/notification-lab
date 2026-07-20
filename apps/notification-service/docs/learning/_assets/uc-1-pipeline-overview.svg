@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 560" width="940" height="560" role="img" aria-label="UC-1 알림 발송 파이프라인 종합도">
+  <title>UC-1 알림 발송 파이프라인 종합도</title>
+  <desc>상류 시스템이 Kafka notification 토픽에 넣은 이벤트를 NotificationListener가 역직렬화하고, NotificationSendService가 채널별로 그룹화한 뒤 캐시를 경유해 수신 설정을 조회하고, NotificationSendCaller가 회로차단기를 거쳐 WireMock 발송 API를 호출합니다. 처리 예외는 1초 간격 2회 재시도 후 notification.DLT로 격리됩니다.</desc>
+
+  <style>
+    .bg { fill: #0d0d0d; }
+    .lbl { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 13px; font-weight: 600; }
+    .sub { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+    .note { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 11px; fill: #b8b3ad; }
+    .edge { stroke: #8a8580; stroke-width: 1.6; fill: none; marker-end: url(#arrow); }
+    .edge-fail { stroke: #c0656a; stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; marker-end: url(#arrow-fail); }
+    .edge-lbl { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 10px; fill: #b8b3ad; }
+    .edge-lbl-fail { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 10px; fill: #c0656a; }
+    .band { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-size: 11px; font-weight: 700; fill: #8a8580; letter-spacing: 0.08em; }
+  </style>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a8580"/>
+    </marker>
+    <marker id="arrow-fail" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c0656a"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="940" height="560"/>
+
+  <!-- 밴드 구획 -->
+  <line x1="30" y1="132" x2="910" y2="132" stroke="#2a2a2a" stroke-width="1"/>
+  <line x1="30" y1="286" x2="910" y2="286" stroke="#2a2a2a" stroke-width="1"/>
+  <line x1="30" y1="404" x2="910" y2="404" stroke="#2a2a2a" stroke-width="1"/>
+  <text class="band" x="30" y="30">외부 · 이벤트 유입</text>
+  <text class="band" x="30" y="160">애플리케이션 · 처리</text>
+  <text class="band" x="30" y="312">설정 조회 · 캐시</text>
+  <text class="band" x="30" y="430">실패 경로 · 격리</text>
+
+  <!-- 상류 시스템 -->
+  <rect x="30" y="48" width="150" height="56" rx="6" fill="#0d0d0d" stroke="#8a8580" stroke-width="1.5"/>
+  <text class="lbl" x="105" y="72" text-anchor="middle" fill="#e8e4df">상류 시스템</text>
+  <text class="sub" x="105" y="90" text-anchor="middle" fill="#b8b3ad">주문 · 회원 등</text>
+
+  <!-- Kafka 토픽 -->
+  <rect x="250" y="48" width="180" height="56" rx="6" fill="rgb(212,168,83)" stroke="rgb(212,168,83)" stroke-width="1.5"/>
+  <text class="lbl" x="340" y="72" text-anchor="middle" fill="#0d0d0d">Kafka 토픽</text>
+  <text class="sub" x="340" y="90" text-anchor="middle" fill="#1a1a1a">notification</text>
+
+  <!-- WireMock -->
+  <rect x="700" y="48" width="210" height="56" rx="6" fill="#0d0d0d" stroke="#8a8580" stroke-width="1.5"/>
+  <text class="lbl" x="805" y="72" text-anchor="middle" fill="#e8e4df">WireMock 발송 API</text>
+  <text class="sub" x="805" y="90" text-anchor="middle" fill="#b8b3ad">POST /send/{channel} :8110</text>
+
+  <text class="edge-lbl" x="215" y="68" text-anchor="middle">JSON 이벤트</text>
+  <path class="edge" d="M 180 76 L 246 76"/>
+
+  <!-- 처리 밴드 -->
+  <rect x="30" y="180" width="185" height="72" rx="6" fill="#5b9bd5" stroke="#5b9bd5" stroke-width="1.5"/>
+  <text class="lbl" x="122" y="206" text-anchor="middle" fill="#e8e4df">NotificationListener</text>
+  <text class="sub" x="122" y="224" text-anchor="middle" fill="#e8e4df">JSON → NotificationEvent</text>
+  <text class="sub" x="122" y="240" text-anchor="middle" fill="#e8e4df">예외를 잡지 않음</text>
+
+  <rect x="285" y="180" width="200" height="72" rx="6" fill="#5b9bd5" stroke="#5b9bd5" stroke-width="1.5"/>
+  <text class="lbl" x="385" y="206" text-anchor="middle" fill="#e8e4df">NotificationSendService</text>
+  <text class="sub" x="385" y="224" text-anchor="middle" fill="#e8e4df">채널별 그룹화</text>
+  <text class="sub" x="385" y="240" text-anchor="middle" fill="#e8e4df">수신 거부자 제외</text>
+
+  <rect x="555" y="180" width="185" height="72" rx="6" fill="#66bb6a" stroke="#66bb6a" stroke-width="1.5"/>
+  <text class="lbl" x="647" y="206" text-anchor="middle" fill="#0d0d0d">NotificationSendCaller</text>
+  <text class="sub" x="647" y="224" text-anchor="middle" fill="#1a1a1a">@CircuitBreaker</text>
+  <text class="sub" x="647" y="240" text-anchor="middle" fill="#1a1a1a">프록시 경유 별도 빈</text>
+
+  <path class="edge" d="M 215 216 L 281 216"/>
+  <path class="edge" d="M 485 216 L 551 216"/>
+  <!-- SendCaller → WireMock : 박스 위로 우회 -->
+  <path class="edge" d="M 740 200 L 790 200 L 790 108"/>
+
+  <!-- 설정 조회 밴드 -->
+  <rect x="285" y="326" width="200" height="66" rx="6" fill="#dceaf7" stroke="#dceaf7" stroke-width="1.5"/>
+  <text class="lbl" x="385" y="350" text-anchor="middle" fill="#0d0d0d">ChannelSettingService</text>
+  <text class="sub" x="385" y="368" text-anchor="middle" fill="#10243a">@Cacheable · Caffeine TTL 10분</text>
+  <text class="sub" x="385" y="384" text-anchor="middle" fill="#10243a">미스 시 H2 조회</text>
+
+  <path class="edge" d="M 350 252 L 350 322"/>
+  <path class="edge" d="M 420 322 L 420 256"/>
+  <text class="edge-lbl" x="316" y="292" text-anchor="end">조회</text>
+  <text class="edge-lbl" x="454" y="292">허용 여부</text>
+
+  <!-- 실패 경로 밴드 : 좌측 세로선으로 내려 겹침 회피 -->
+  <rect x="30" y="446" width="205" height="66" rx="6" fill="#f2d4d4" stroke="#f2d4d4" stroke-width="1.5"/>
+  <text class="lbl" x="132" y="470" text-anchor="middle" fill="#0d0d0d">DefaultErrorHandler</text>
+  <text class="sub" x="132" y="488" text-anchor="middle" fill="#7a1f1f">FixedBackOff(1000ms, 2)</text>
+  <text class="sub" x="132" y="504" text-anchor="middle" fill="#7a1f1f">리스너 메서드 전체 재실행</text>
+
+  <rect x="555" y="446" width="185" height="66" rx="6" fill="#f2d4d4" stroke="#f2d4d4" stroke-width="1.5"/>
+  <text class="lbl" x="647" y="470" text-anchor="middle" fill="#0d0d0d">notification.DLT</text>
+  <text class="sub" x="647" y="488" text-anchor="middle" fill="#7a1f1f">실패 원인 헤더 동봉</text>
+  <text class="sub" x="647" y="504" text-anchor="middle" fill="#7a1f1f">이후 오프셋 커밋</text>
+
+  <!-- 리스너 → 에러핸들러 : 좌측 여백을 타고 내려감 -->
+  <path class="edge-fail" d="M 70 252 L 70 442"/>
+  <text class="edge-lbl-fail" x="80" y="350">처리 예외</text>
+  <!-- 에러핸들러 → DLT : 밴드 안에서 수평 -->
+  <path class="edge-fail" d="M 235 479 L 551 479"/>
+  <text class="edge-lbl-fail" x="393" y="470" text-anchor="middle">재시도 소진 (총 3회 시도)</text>
+
+  <text class="note" x="30" y="540">회로가 OPEN이면 외부 호출 없이 즉시 실패하고, 같은 실패 경로를 탑니다.</text>
+</svg>
