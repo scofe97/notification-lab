@@ -92,7 +92,7 @@ curl -X POST localhost:8110/__admin/requests/count -H "Content-Type: application
 curl localhost:8110/__admin/mappings
 ```
 
-응답 코드가 곧 실패를 뜻하는 것은 아닙니다 — 500을 "실패"로 만드는 것은 Feign이 2xx 밖 응답을 `FeignException`으로 번역하는 기본 동작이며, 실패의 정의를 바꾸려면 `ErrorDecoder`를 커스텀합니다. 실험에서의 활용 기록은 [학습 문서 Phase 4](learning/UC-1-kafka-notification.md)를 참조합니다.
+응답 코드가 곧 실패를 뜻하는 것은 아닙니다 — 500을 "실패"로 만드는 것은 Feign이 2xx 밖 응답을 `FeignException`으로 번역하는 기본 동작이며, 실패의 정의를 바꾸려면 `ErrorDecoder`를 커스텀합니다. 스텁 조작부터 회로차단 판정까지의 개념은 [외부 호출과 회복 탄력성](concepts/external-call-and-resilience.md), 실험 기록은 [학습 문서 Phase 4](learning/UC-1-kafka-notification.md)를 참조합니다.
 
 ## 4. 현재 구현 상태
 

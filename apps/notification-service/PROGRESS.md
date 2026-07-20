@@ -46,10 +46,22 @@
 
 ---
 
+## UC-1 마무리 (2026-07-20)
+
+이해 루프 5단계와 실측 실습을 마치고 UC-1을 닫았습니다. 기록은 [학습 문서](docs/learning/UC-1-kafka-notification.md), 개념 정리는 [concepts/](docs/concepts/00-index.md)에 있습니다.
+
+실측으로 확인한 것: 재시도 1초 간격 2회 후 DLT 적재와 실패 원인 헤더, 캐시 히트(처리 250ms→54ms), 수신 거부 시 외부 호출 생략, 부분 실패 시 성공 채널의 중복 발송(EMAIL 3회), 캐시 무효화 부재로 DB 거부가 최대 10분간 무시되는 것, DLT 재처리는 원인 해소가 선행되어야 한다는 것.
+
+수정한 것: `@CircuitBreaker`가 self-invocation과 AOP 스타터 부재로 무력했습니다. `NotificationSendCaller`를 별도 빈으로 분리하고 `spring-boot-starter-aop`·`actuator`를 추가한 뒤, 5건 실패에서 OPEN 전이·차단 6건·HALF_OPEN 회복을 확인했습니다.
+
+다음 작업으로 넘긴 것: `eventId` 기반 멱등 처리(중복 발송 해소), UC-4 설정 CRUD 시 `@CacheEvict` 동반.
+
+---
+
 ## 남은 것 (Phase별 — [ROADMAP](../../ROADMAP.md) 순서)
 
 **Phase 2 — 알림 서비스 마무리**
-1. E2E 테스트(Testcontainers) 자동화 — Kafka 발행 → WireMock 발송 검증, 실패→회로차단+DLT, 캐시 히트. 위 수동 검증을 자동 테스트로 박제 (Task #17, Phase 2-1)
+1. E2E 테스트(Testcontainers) 자동화 — Kafka 발행 → WireMock 발송 검증, 실패→회로차단+DLT, 캐시 히트. 2026-07-20 수동 실측을 자동 테스트로 박제 (Task #17, Phase 2-1). **다음 세션 시작점**
 2. UC-4 채널 설정 REST CRUD (Phase 2-2) · UC-2 외부 REST 발송 (Phase 2-3)
 3. 이력(`notification.history`) 패키지 — UC-3(조회)·UC-5(아카이빙)·SSL 재현 (Phase 2-4)
 
@@ -75,3 +87,5 @@ cd apps/notification-service
 - **bitnami/kafka:3.6.1 매니페스트 없음**: Bitnami 태그 정책 변경 → 공식 `apache/kafka:3.8.0`으로 교체
 - **Java 25 금지**: 시스템 기본이 25지만 Gradle toolchain으로 21 강제 (Temurin/Corretto 21 설치돼 있음)
 - **Kafka 헬스체크 무한 starting**: 헬스체크가 EXTERNAL 리스너(`localhost:9092`→advertise `localhost:9192`)로 붙어, 컨테이너 내부에서 `9192`가 안 열려 실패. 내부 리스너 `kafka:9094`로 변경해 해결. (호스트/앱은 그대로 `localhost:9192` 사용)
+- **Docker 리소스 부족으로 Kafka가 간헐 unhealthy** (2026-07-20): Docker Desktop이 CPU 2코어·RAM 2GiB만 쓰고 있었고, 다른 학습용 컨테이너(kind 3노드가 유휴에도 CPU 49%)와 겹쳐 브로커가 컨트롤러 하트비트 타임아웃(`REQUEST_TIMED_OUT`)을 냈습니다. **CPU 4코어·RAM 6GiB로 상향**해 해결. 이때 앱은 `/actuator/health` 200을 유지한 채 메시지만 소비하지 못했으므로, 파이프라인 상태는 health가 아니라 컨슈머 lag으로 판단합니다.
+- **kafka-ui `latest` 태그 기동 정지** (2026-07-20): 부팅 로그 3줄 이후 진행되지 않아 8100이 응답하지 않았습니다. `v0.7.2`로 고정해 해결.

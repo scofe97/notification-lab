@@ -67,7 +67,9 @@ cd ~/notification-lab && docker compose -f infra/compose.yaml up -d kafka-ui  # 
 
 ## 확인 기록 (직접 채움)
 
-- [ ] 독약 메시지가 재시도 2회 후 DLT로 갔는가:
-- [ ] DLT 헤더에서 실패 원인을 읽었는가:
-- 막힌 점:
-- 새로 안 것:
+- [x] 독약 메시지가 재시도 2회 후 DLT로 갔는가: **확인 (2026-07-20)**. JSON이 아닌 문자열을 발행하니 `Record in retry` 로그가 1초 간격으로 2줄 찍히고, `notification.DLT`를 소비했을 때 그 문자열이 그대로 나왔다.
+- [x] DLT 헤더에서 실패 원인을 읽었는가: **확인 (2026-07-20)**. `kafka_dlt-exception-cause-fqcn`이 `JsonParseException`, `kafka_dlt-exception-message`에 `Unrecognized token 'hello'`가 실려 있었다. 외부 5xx 케이스는 원인 클래스가 Feign 예외로 바뀐다.
+- 막힌 점: 앱 로그에는 재시도 중 예외 스택이 남지 않아(INFO 재시도 알림만), 원인 추적을 DLT 헤더에 의존해야 했다. 또 인프라가 포화 상태일 때는 `/actuator/health`가 200인데도 메시지가 소비되지 않아, health만으로 판단하면 안 된다는 것을 겪었다.
+- 새로 안 것: 재시도의 단위가 실패한 안쪽 호출이 아니라 **리스너 메서드 전체**라는 것. 그래서 일부 채널만 실패해도 성공한 채널까지 재발송된다(멱등 처리 부재 시 중복 발송). DLT 재처리는 자동이 아니라 운영 행위이며, **원인이 해소되기 전에 재발행하면 DLT를 왕복만 한다** — 같은 이벤트를 세 번 재처리하고 네 번째에야 성공했다.
+
+> 상세한 실험 절차와 판정 근거는 [학습 문서 Phase 4](../learning/UC-1-kafka-notification.md), 개념 정리는 [Kafka 메시지 처리](../concepts/kafka-message-handling.md)에 있습니다.

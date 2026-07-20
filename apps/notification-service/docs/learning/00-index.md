@@ -13,4 +13,6 @@
 
 | 문서 | 학습 단위 | 상태 | 다음 단계 |
 |------|-----------|------|-----------|
-| [UC-1 Kafka 알림 발송](UC-1-kafka-notification.md) | Kafka 소비·채널별 발송·재시도·DLT | 이해 확인 완료 (2026-07-20, 실측 실습 포함) | CircuitBreaker self-invocation 수정 검증, 부분 실패 중복 발송 실측 |
+| [UC-1 Kafka 알림 발송](UC-1-kafka-notification.md) | Kafka 소비·채널별 발송·재시도·DLT | **마무리 완료** (2026-07-20 — 5단계 통과, 후속 검증 7건 실측) | Phase 2-1 Testcontainers E2E로 자동화 |
+
+개념 정리는 UC에 매이지 않으므로 [concepts/](../concepts/00-index.md)에 따로 둡니다.
