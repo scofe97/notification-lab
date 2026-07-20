@@ -31,7 +31,7 @@
 | `application.yml` `enable-auto-commit: false` + `ack-mode: record` | 자동 커밋을 왜 껐나 | 처리 성공해야만 커밋 → 유실 방지(NFR-4). auto-commit이면 처리 전에 커밋될 수 있음 |
 | `send/service/NotificationSendService` | 수신자를 **채널별로 그룹핑**하는 로직. 채널 설정(enabled=false)을 어디서 거르나 | 발송의 핵심 분기. 그룹핑 단위가 발송 호출 단위 |
 | `@Cacheable(key="#userId + ':' + #channelType")` (`ChannelSettingService`) | 캐시 키 조합이 맞나. 캐시 무효화(`@CacheEvict`)는 있나? | 설정 변경 시 캐시가 안 지워지면 옛 값으로 발송할 수 있음 (지금은 TTL 10분에만 의존 → 리뷰 포인트) |
-| `@CircuitBreaker(name="notificationSend")` (서비스 `callSend`) | fallback이 없다. 회로 OPEN이면 무슨 일이? | fallback 미지정 → 예외가 위로 전파 → 리스너 에러 핸들러가 DLT로. 이 연쇄를 코드로 따라갈 수 있는지 |
+| `@CircuitBreaker(name="notificationSend")` (`remote/NotificationSendCaller.callSend`) | fallback이 없다. 회로 OPEN이면 무슨 일이? 그리고 이 메서드는 **왜 서비스가 아닌 별도 빈**에 있나 | fallback 미지정 → 예외(`CallNotPermittedException`)가 위로 전파 → 리스너 에러 핸들러가 DLT로. 별도 빈인 이유는 프록시 경유 — 서비스 내부 호출이면 어노테이션이 무력해진다 ([학습 문서 Phase 4](../learning/UC-1-kafka-notification.md) 실측 기록) |
 | `send/config/KafkaConsumerConfig` | 재시도 횟수(2회)·간격(1s)·DLT 토픽명(`{topic}.DLT`) | 재시도 정책이 곧 "몇 번 실패해야 포기하나"의 정의 |
 | `send/remote/NotificationSendClient` (Feign) | URL·API 키를 **하드코딩했나** placeholder인가 | 시크릿은 `application.yml` placeholder + 환경변수여야 함 (dev-standards) |
 

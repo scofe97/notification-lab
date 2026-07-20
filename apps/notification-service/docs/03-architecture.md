@@ -63,6 +63,37 @@ flowchart TB
 
 앱은 Undertow 기반으로 `8092`에서 실행합니다. 현재 채널 설정 저장소는 H2 파일 모드이며, MariaDB 전환은 관측 스터디의 후속 단계입니다.
 
+### 3-1. WireMock — 외부 발송 API의 대역
+
+WireMock은 실제 SMS·메일 벤더 대신 발송 요청을 받아주는 목 서버입니다. Feign의 `notification.send.base-url`이 `localhost:8110`을 가리키므로, 외부 계약 없이 발송 경로를 끝까지 실행할 수 있고 장애 상황도 마음대로 연출할 수 있습니다.
+
+**스텁(stub)** 은 "이 요청이 오면 이 응답을 줘라"라는 규칙이며 두 종류를 씁니다.
+
+| 종류 | 정의 위치 | 수명 | 용도 |
+|---|---|---|---|
+| 파일 스텁 | [`infra/wiremock/mappings/send-success.json`](../../../infra/wiremock/mappings/send-success.json) | 재시작에도 유지 | 기본 동작 — `POST /send/(sms\|alimtalk\|email)`에 200 성공 응답 |
+| 런타임 스텁 | admin API로 주입 | 메모리에만 — 삭제·재시작 시 소멸 | 장애 연출 — `priority`를 파일 스텁보다 높게 주면 먼저 매칭됨 |
+
+자주 쓰는 admin API (`http://localhost:8110/__admin`):
+
+```bash
+# 5xx 장애 연출 스텁 주입 (응답의 id를 메모해 두면 복구가 쉬움)
+curl -X POST localhost:8110/__admin/mappings -H "Content-Type: application/json" \
+  -d '{"priority":1,"request":{"method":"POST","urlPath":"/send/sms"},"response":{"status":500}}'
+
+# 주입 스텁 삭제 (원상복구)
+curl -X DELETE localhost:8110/__admin/mappings/<id>
+
+# 특정 요청이 몇 건 도달했는지 (요청 저널) — 회로차단 개입 여부의 관측 지점
+curl -X POST localhost:8110/__admin/requests/count -H "Content-Type: application/json" \
+  -d '{"method":"POST","urlPath":"/send/sms"}'
+
+# 등록된 스텁 전체 확인
+curl localhost:8110/__admin/mappings
+```
+
+응답 코드가 곧 실패를 뜻하는 것은 아닙니다 — 500을 "실패"로 만드는 것은 Feign이 2xx 밖 응답을 `FeignException`으로 번역하는 기본 동작이며, 실패의 정의를 바꾸려면 `ErrorDecoder`를 커스텀합니다. 실험에서의 활용 기록은 [학습 문서 Phase 4](learning/UC-1-kafka-notification.md)를 참조합니다.
+
 ## 4. 현재 구현 상태
 
 ```mermaid
