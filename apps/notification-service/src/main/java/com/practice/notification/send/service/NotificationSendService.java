@@ -4,9 +4,8 @@ import com.practice.notification.send.channel.ChannelSettingService;
 import com.practice.notification.send.domain.ChannelType;
 import com.practice.notification.send.domain.NotificationEvent;
 import com.practice.notification.send.domain.SendResult;
-import com.practice.notification.send.remote.NotificationSendClient;
+import com.practice.notification.send.remote.NotificationSendCaller;
 import com.practice.notification.send.remote.SendRequest;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,7 +29,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class NotificationSendService {
 
-    private final NotificationSendClient sendClient;
+    private final NotificationSendCaller sendCaller;
     private final ChannelSettingService channelSettingService;
 
     /**
@@ -60,21 +59,8 @@ public class NotificationSendService {
             return SendResult.of(channelType, 0, 0);
         }
 
-        // ③④ 회로차단기로 감싼 발송
+        // ③④ 회로차단기로 감싼 발송 — 프록시를 거치도록 별도 빈(NotificationSendCaller)에 위임
         SendRequest request = new SendRequest(event.title(), event.content(), destinations);
-        return callSend(channelType, request);
-    }
-
-    /**
-     * 외부 발송 API를 호출합니다. 반복 실패 시 회로가 열려 이후 호출을 즉시 차단합니다(FR-5).
-     * fallback은 지정하지 않아, 회로 OPEN 시 예외가 위로 전파되고 리스너의 에러 핸들러가 DLT로 보냅니다.
-     */
-    @CircuitBreaker(name = "notificationSend")
-    public SendResult callSend(ChannelType channelType, SendRequest request) {
-        String channelPath = channelType.name().toLowerCase();
-        sendClient.send(channelPath, request);
-        int count = request.destinations().size();
-        log.debug("채널 {} 발송 성공: {}건", channelType, count);
-        return SendResult.of(channelType, count, count);
+        return sendCaller.callSend(channelType, request);
     }
 }

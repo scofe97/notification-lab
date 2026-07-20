@@ -39,6 +39,11 @@ dependencies {
     // ── 회로차단 (Resilience4j) ──
     implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
     implementation 'io.github.resilience4j:resilience4j-spring-boot3'
+    // @CircuitBreaker 등 어노테이션은 AspectJ aspect로 동작 — AOP 스타터가 없으면 aspect 미등록으로 무력화됨
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+    // ── 관측 (actuator: health·circuitbreakers 상태 조회) ──
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // ── 캐시 (Caffeine) ──
     implementation 'org.springframework.boot:spring-boot-starter-cache'
