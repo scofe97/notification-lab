@@ -2,7 +2,7 @@
 
 외부 시스템이 REST로 직접 발송을 요청하는 흐름입니다. UC 명세(주 흐름·대안 흐름)는 [../02-actors-usecases.md](../02-actors-usecases.md) §UC-2에 있습니다.
 
-- **상태**: 미구현 (UC-1 발송 파이프라인 완성 후 후속. `notification.send` 패키지에 REST 진입점 추가 예정)
+- **상태**: 구현 + 스모크 검증 완료 (2026-07-21). 당초 메모(`notification.send`에 추가)와 달리 별도 헥사고날 컨텍스트 `notification.dispatch`(api·application·domain·infrastructure)로 구현 — [AGENTS.md](../../../../AGENTS.md) 컨벤션 첫 신규 적용. 응답 규칙: 수신자 없음 404 · 전 채널 성공 200 · 일부 실패 207 · 전부 실패 502 (207/502는 미실측)
 - **관련 FR**: FR-6
 - **주 액터**: 외부 시스템
 
@@ -28,6 +28,7 @@
 ## 3. 직접 관찰·실측법 (구현 후 채움)
 
 - WireMock에 수신자 조회 API와 발송 API를 두고, REST 호출 한 번이 조회 → 발송으로 이어지는지 요청 카운트로 확인.
+- 2026-07-21 스모크 실측: `POST /api/dispatch`(grp-ops) 1회에 recipients +1 → sms +1·email +1, 응답 200에 SMS 2/2·EMAIL 1/1 집계. 빈 필드 400, 빈 그룹(런타임 스텁) 404 확인 후 스텁 원복.
 
 ---
 

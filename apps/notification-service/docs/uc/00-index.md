@@ -12,7 +12,7 @@
 |------|-----|------|-----------|------------------|------|-----------|
 | [UC-1.md](UC-1.md) | Kafka 알림 발송 | **구현+검증 완료** | @KafkaListener·Caffeine·OpenFeign·Resilience4j | `send` 전 패키지 — listener/`NotificationListener` · service/`NotificationSendService` · remote/`NotificationSendClient`·`NotificationSendCaller` · config/`KafkaConsumerConfig`·`CacheConfig` · domain 3종 — 및 `channel` 컨텍스트의 `ChannelSettingService`(2026-07-21 헥사고날 분리) | 수동 E2E (2026-07-09) + 실측 실습·회로차단 수정 검증 (2026-07-20) | E2E 자동화 — Testcontainers (Phase 2-1) |
 | [UC-1-dlt.md](UC-1-dlt.md) | └ 실패 경로(DLT 관찰) | **적재·재처리 실측 완료** | DeadLetterPublishingRecoverer | config/`KafkaConsumerConfig` (재시도 2회 → `notification.DLT`) | 독약·5xx 적재, 헤더 원인, 재처리 성공/실패 조건 확인 (2026-07-20) | 자동 재처리 도구는 Phase 3 후보 |
-| [UC-2.md](UC-2.md) | 외부 시스템 REST 발송 | 미구현 | OpenFeign(수신자 조회 API) | 없음 | — | REST 진입점 → 기존 발송 서비스 재사용 (Phase 2-3) |
+| [UC-2.md](UC-2.md) | 외부 시스템 REST 발송 | **구현+스모크 검증** (2026-07-21) | OpenFeign(수신자 조회)·헥사고날 | `dispatch` 컨텍스트(api·application·domain+port·infrastructure) — send는 완충 어댑터로 재사용 | 스모크 — 200 집계·400·404, 조회→발송 카운트 연쇄 | 이해 루프 + 207/502 실측 |
 | [UC-3.md](UC-3.md) | 알림 이력 조회 | 미구현 | OpenSearch·채널별 매퍼 | 없음 (`history` 패키지 미생성) | — | OpenSearch 색인·조회 (Phase 2-4) |
 | [UC-4.md](UC-4.md) | 알림채널 설정 | 데이터만 존재 | JPA 복합키·REST CRUD | `channel` 컨텍스트(api·application·domain·infrastructure — 2026-07-21 헥사고날 분리) | 캐시 경유 조회는 UC-1 E2E에 포함 | REST CRUD + 캐시 무효화 (Phase 2-2) |
 | [UC-5.md](UC-5.md) | 로그 아카이빙 | 미구현 | @Scheduled·OpenSearch | 없음 | — | @Scheduled export (Phase 2-4) |

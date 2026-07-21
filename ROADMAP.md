@@ -24,8 +24,8 @@ Kafka `notification` 소비(`@KafkaListener`) → 채널 설정 캐시(Caffeine)
 | 순서 | 작업 | 산출물 |
 |------|------|--------|
 | 2-1 | E2E 테스트 자동화 (Testcontainers) | 발행→발송, 실패→DLT, 캐시 히트 검증 |
-| 2-2 | UC-4 알림채널 설정 CRUD | 설정 조회·저장 API + 캐시 무효화 확인 |
-| 2-3 | UC-2 외부 REST 발송 | REST 진입점 → 기존 발송 서비스 재사용 |
+| 2-2 | ✅ UC-4 알림채널 설정 CRUD (2026-07-20) | GET/PUT API + `@CachePut` 즉시 반영 검증. 2026-07-21 헥사고날 `channel` 컨텍스트로 분리 |
+| 2-3 | ✅ UC-2 외부 REST 발송 (2026-07-21) | `dispatch` 컨텍스트 — 수신자 조회(Feign) → 기존 발송 재사용, 응답 코드 집계 |
 | 2-4 | UC-3 이력 조회 + UC-5 아카이빙 | OpenSearch 색인·조회·스케줄 기반 export |
 
 ## Phase 3 — LGMT Observability 스터디 🔜
