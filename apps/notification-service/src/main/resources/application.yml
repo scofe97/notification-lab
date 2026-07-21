@@ -45,6 +45,9 @@ notification:
   send:
     base-url: ${NOTIFICATION_SEND_URL:http://localhost:8110}
     api-key: ${NOTIFICATION_SEND_API_KEY:local-mock-key}
+  # 수신자 조회 API도 WireMock으로 모사합니다 (UC-2)
+  recipient:
+    base-url: ${NOTIFICATION_RECIPIENT_URL:http://localhost:8110}
 
 # 회로차단기 (Resilience4j) — 발송 반복 실패 시 차단
 resilience4j:

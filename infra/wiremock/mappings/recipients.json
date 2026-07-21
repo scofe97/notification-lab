@@ -1,0 +1,17 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/recipients/[A-Za-z0-9-]+"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": [
+      { "userId": "user-1", "channelType": "SMS", "destination": "01000000001" },
+      { "userId": "user-2", "channelType": "EMAIL", "destination": "user-2@example.local" },
+      { "userId": "user-3", "channelType": "SMS", "destination": "01000000003" }
+    ]
+  }
+}
