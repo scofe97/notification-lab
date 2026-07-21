@@ -27,11 +27,17 @@
 
 | UC | 실험 | 핵심 증거 | 목표 산출물 |
 |----|------|-----------|-------------|
-| UC-01 | 정상 처리 기준선 | 처리량·p95 latency·lag·cache hit ratio | `01-normal-baseline.md` |
-| UC-02 | 외부 API 지연 | Feign latency·consumer lag·Tempo span | `02-external-delay.md` |
+| UC-01 | 정상 처리 기준선 + JVM 패널 | 처리량·p95 latency·lag·cache hit ratio·JVM 기준값 | `01-normal-baseline.md` |
+| UC-02 | Poison Message | validation/deserialization error·DLT header | `02-poison-message-dlt.md` |
 | UC-03 | 외부 API 5xx·CircuitBreaker·DLT | 5xx·CB state·not permitted·DLT | `03-external-5xx-circuitbreaker.md` |
-| UC-04 | Poison Message | validation/deserialization error·DLT header | `04-poison-message-dlt.md` |
-| UC-05 | 대량 발행·consumer concurrency | produce/consume rate·lag·partition·concurrency | `05-consumer-lag.md` |
-| UC-06 | Cache Hit/Miss | hit ratio·DB query·처리 시간 | `06-cache-hit-miss.md` |
+| UC-04 | 외부 API 지연 | Feign latency·consumer lag·Tempo span | `04-external-delay.md` |
+| UC-05 | Cache Hit/Miss | hit ratio·DB query·처리 시간 | `05-cache-hit-miss.md` |
+| UC-06 | 대량 발행·consumer concurrency | produce/consume rate·lag·partition·concurrency | `06-consumer-lag.md` |
 | UC-07 | DB latency·HikariCP | query latency·active/pending·lag | `07-db-latency.md` |
-| UC-08 | Loki label cardinality | stream 수·ingestion·query latency | `08-loki-label-cardinality.md` |
+| UC-08 | Consumer rebalance | rebalance 로그·lag spike·재전달 중복 | `08-consumer-rebalance.md` |
+| UC-09 | GC 압박 → lag 전파 | jvm_gc_pause·처리 latency·lag | `09-gc-pressure.md` |
+| UC-10 | 스레드 블로킹 관찰 | jvm_threads states·thread dump·처리량 정체 | `10-thread-blocking.md` |
+| UC-11 | OOM·heap dump 분석 | OOM 로그·재시작·heap dump 지배 객체 | `11-oom-heap-dump.md` |
+| UC-12 | Loki label cardinality | stream 수·ingestion·query latency | `12-loki-label-cardinality.md` |
+
+번호는 쉽고 우선순위 높은 것부터의 진행 순서입니다(2026-07-21 재정렬, UC-09~11은 JVM 축). 상세는 [관측 시나리오](../../../../docs/observability/02-scenarios-and-operations.md)가 SSOT입니다.

@@ -15,11 +15,13 @@ Phase 3의 목적은 Kafka 알림 파이프라인에서 지연·실패·DLT·Cir
 
 ## 주차별 산출물
 
+> 주차는 난이도·의존 순서의 가이드이지 기한이 아닙니다. 관측 UC 번호 순서(쉽고 우선순위 높은 것부터)로 할 수 있는 만큼 진행합니다.
+
 | 주차 | 목표 | 산출물 |
 |------|------|--------|
 | 1주 | 관측 설계와 정상 기준선 | Signal Catalog, failure scenario, Loki label 정책, 기준선 기록 |
 | 2주 | 계측과 LGMT 연결 | Actuator·Micrometer·OTel, Alloy, 정상 dashboard, traceId log-trace 연결 |
-| 3주 | 장애 주입과 원인 판단 | 8개 관측 UC의 재현법, metric·log·trace 증거, 실험 기록 |
+| 3주 | 장애 주입과 원인 판단 | 관측 UC(01~12)의 재현법, metric·log·trace 증거, 실험 기록 |
 | 4주 | 운영 결과물화 | dashboard JSON, alert rule, Runbook, final review |
 
 ## 결과물 구조
@@ -41,7 +43,6 @@ notification-lab/
 
 ## 우선순위
 
-- **반드시**: consumer lag, retry/DLT, WireMock 5xx·timeout·delay, CircuitBreaker 상태, Caffeine hit/miss, traceId 기반 log-trace 연결, Grafana 대시보드, 장애 실험 문서, Runbook
+- **반드시**: consumer lag, retry/DLT, WireMock 5xx·timeout·delay, CircuitBreaker 상태, Caffeine hit/miss, consumer rebalance, traceId 기반 log-trace 연결, Grafana 대시보드, 장애 실험 문서, Runbook
+- **후반 (JVM 축)**: GC 압박, 스레드 블로킹, OOM·heap dump — 관측 UC-09~11로 정규 편입(2026-07-21). 서비스 신호(외부 API·DB·consumer)로 설명되지 않는 병목을 다루므로 기본 관측이 자리 잡은 뒤 진행
 - **가능하면**: DLT Reprocessor, eventId 기반 idempotency, dashboard·alert as code, kind/k3d 배포, Loki label cardinality 심화 실험
-
-JVM heap·GC·thread·CPU 분석은 기본 관측 결과가 쌓인 뒤 서비스 지표와 함께 해석하는 후속 확장 후보입니다.
