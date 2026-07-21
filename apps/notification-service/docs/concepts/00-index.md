@@ -8,6 +8,7 @@
 |------|-----------|
 | [Kafka 메시지 처리](kafka-message-handling.md) | 오프셋과 커밋, ack-mode, 재시도 단위, DLT 적재와 재처리, 캐시가 consumer lag에 미치는 영향 |
 | [외부 호출과 회복 탄력성](external-call-and-resilience.md) | WireMock 스텁과 장애 연출, Feign의 예외 번역, CircuitBreaker 상태 전이와 프록시 AOP |
+| [Caffeine 캐시와 Spring 캐시 추상화](caffeine-cache.md) | 로컬 캐시의 득실, TTL·크기 상한, @Cacheable/@CachePut/@CacheEvict 3형제, 키 SpEL 계약, 다중 인스턴스 경계 |
 
 ## 관련 문서
 
