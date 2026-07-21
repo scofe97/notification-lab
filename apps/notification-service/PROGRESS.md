@@ -24,7 +24,7 @@
 ### UC-1 발송 파이프라인 (컴파일 통과) — 전부 `notification.send` 하위
 - `send/domain`: `ChannelType` · `NotificationEvent` · `SendResult`
 - `send/remote`: `NotificationSendClient`(Feign) · `SendRequest` · `SendResponse`
-- `send/channel`: `ChannelSetting`(복합키 Entity) · `ChannelSettingRepository` · `ChannelSettingService`(`@Cacheable`)
+- `channel`(별도 컨텍스트, 2026-07-21 헥사고날 분리): domain/`ChannelSetting`+port · application/`ChannelSettingService`(`@Cacheable`) · infrastructure/`ChannelSettingEntity`(복합키)+어댑터 · api/REST
 - `send/service`: `NotificationSendService`(채널 그룹핑 + `@CircuitBreaker` 발송)
 - `send/listener/NotificationListener` — `@KafkaListener`로 `notification` 토픽 소비 → JSON 역직렬화 → `send()` 호출. 예외를 잡지 않음(에러 핸들러가 DLT로)
 - `send/config/KafkaConsumerConfig` — `DefaultErrorHandler` + `DeadLetterPublishingRecoverer`(실패 → `notification.DLT`), 재시도 2회·1초 간격

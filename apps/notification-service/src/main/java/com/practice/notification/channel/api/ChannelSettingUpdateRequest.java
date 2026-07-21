@@ -1,4 +1,4 @@
-package com.practice.notification.send.channel;
+package com.practice.notification.channel.api;
 
 import jakarta.validation.constraints.NotNull;
 

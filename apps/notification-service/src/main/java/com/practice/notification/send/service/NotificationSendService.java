@@ -1,6 +1,6 @@
 package com.practice.notification.send.service;
 
-import com.practice.notification.send.channel.ChannelSettingService;
+import com.practice.notification.channel.domain.port.in.GetChannelSettingUseCase;
 import com.practice.notification.send.domain.ChannelType;
 import com.practice.notification.send.domain.NotificationEvent;
 import com.practice.notification.send.domain.SendResult;
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Service;
 public class NotificationSendService {
 
     private final NotificationSendCaller sendCaller;
-    private final ChannelSettingService channelSettingService;
+    private final GetChannelSettingUseCase channelSettingUseCase;
 
     /**
      * 이벤트의 수신자를 채널별로 그룹핑해 각 채널로 발송하고, 채널별 결과를 돌려줍니다.
@@ -50,7 +50,7 @@ public class NotificationSendService {
                                    List<NotificationEvent.Receiver> receivers) {
         // ② 채널 설정 조회 — 수신 거부한 수신자는 목적지에서 제외
         List<String> destinations = receivers.stream()
-                .filter(r -> channelSettingService.isEnabled(r.userId(), channelType))
+                .filter(r -> channelSettingUseCase.isEnabled(r.userId(), channelType))
                 .map(NotificationEvent.Receiver::destination)
                 .toList();
 

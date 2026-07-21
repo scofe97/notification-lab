@@ -1,4 +1,4 @@
-package com.practice.notification.send.channel;
+package com.practice.notification.channel.api;
 
 import com.practice.notification.send.domain.ChannelType;
 
