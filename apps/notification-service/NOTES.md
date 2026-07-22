@@ -5,7 +5,7 @@
 - [UC별 노트](docs/uc/00-index.md)
 - [진행 상태·빌드](PROGRESS.md)
 - [전체 로드맵](../../ROADMAP.md)
-- [관측 스터디 계획](../../docs/observability/00-study-plan.md)
+- [관측 스터디 계획](../../observability/docs/00-study-plan.md)
 - [설계 문서](docs/)
 
 ## 표준 Spring Kafka 매핑

@@ -36,6 +36,24 @@ infrastructure 하위 패키지 규칙 (2026-07-22): 한 어댑터를 이루는 
 
 - **전 컨텍스트 적용 완료** (2026-07-22) — send·channel·dispatch 모두 이 구조를 따른다. 신규 코드·신규 컨텍스트도 즉시 적용.
 
+## 저장소 구조 (2026-07-22 통일)
+
+관례 기준으로 루트를 관점별 3분할한다. 새 폴더를 루트에 만들기 전에 이 셋 중 어디에 속하는지 먼저 판단한다.
+
+```text
+notification-lab/
+├── apps/            # 코드 — 앱마다 하위 폴더, 앱별 문서(README·ROADMAP·docs/)는 그 안에 둔다
+├── infra/           # 인프라 — compose·LGMT·WireMock 등 로컬 구성
+└── observability/   # 3단계 관측 스터디 (설계 + 결과물 한 지붕)
+    ├── docs/        # 관측 설계 문서
+    └── dashboards·alerts·scenarios·experiments·runbooks/  # 결과물
+```
+
+- **문서 위치**: 설계 문서는 그 대상의 `docs/` 안에 둔다 — 서비스 설계는 `apps/notification-service/docs/`, 관측 설계는 `observability/docs/`. 루트에 범용 `docs/`를 다시 만들지 않는다.
+- **파일명 규칙은 폴더 성격을 따른다** (통일 강제 안 함): 읽는 순서가 있는 설계 문서는 `NN-` prefix(`00-`,`01-`), UC에 1:1 매인 문서는 `UC-N`, 순서·UC 무관한 개념은 prefix 없음. 각 폴더 `00-index.md`가 그 규칙을 설명한다.
+- **SSOT 분리**: 전체 단계는 루트 `ROADMAP.md`, 각 앱의 모듈 계획은 그 앱의 `ROADMAP.md`(루트를 역참조). 전체 진입점은 루트 `OVERVIEW.md`.
+- **패키지**: 모든 소스·테스트는 `com.practice.notification.*`. 조직명(`okestro` 등)을 경로·패키지에 두지 않는다.
+
 ## 원본 컨벤션 출처
 
 redpanda-playground hexagonal-guide의 4계층 구조를 채택했다 (api / application / domain(port 선언) / infrastructure, 순수 도메인 + 역의존).

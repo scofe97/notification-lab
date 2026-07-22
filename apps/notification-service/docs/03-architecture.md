@@ -2,7 +2,7 @@
 
 `notification-service`는 Kafka 알림 이벤트를 소비해 수신자별 채널 설정을 조회하고 외부 발송 API에 전달하는 Spring Boot 서비스입니다. 이 문서는 현재 구현과 관측 스터디를 위한 확장 방향을 함께 설명합니다.
 
-관련 문서: [요구사항](01-requirements.md), [유스케이스](02-actors-usecases.md), [관측 아키텍처](../../../docs/observability/01-architecture.md)
+관련 문서: [요구사항](01-requirements.md), [유스케이스](02-actors-usecases.md), [관측 아키텍처](../../../observability/docs/01-architecture.md)
 
 ## 1. 계층과 책임
 
@@ -118,6 +118,6 @@ flowchart LR
 
 ## 5. 관측 스터디 확장
 
-Phase 3에서는 이 서비스를 관측 대상으로 두고 `notification-scenario-runner`가 정상·부하·실패 시나리오를 만듭니다. 서비스가 로그·메트릭·트레이스를 내보내면 Alloy 또는 OpenTelemetry Collector가 Loki·Mimir·Tempo로 전달하고, Grafana에서 증상을 원인으로 좁혀갑니다.
+3단계에서는 이 서비스를 관측 대상으로 두고 `notification-scenario-runner`가 정상·부하·실패 시나리오를 만듭니다. 서비스가 로그·메트릭·트레이스를 내보내면 Alloy 또는 OpenTelemetry Collector가 Loki·Mimir·Tempo로 전달하고, Grafana에서 증상을 원인으로 좁혀갑니다.
 
-세부 구성과 주차별 변화는 [관측 아키텍처](../../../docs/observability/01-architecture.md), [스터디 계획](../../../docs/observability/00-study-plan.md), [Scenario Runner 로드맵](../../notification-scenario-runner/ROADMAP.md)을 따릅니다.
+세부 구성과 주차별 변화는 [관측 아키텍처](../../../observability/docs/01-architecture.md), [스터디 계획](../../../observability/docs/00-study-plan.md), [Scenario Runner 로드맵](../../notification-scenario-runner/ROADMAP.md)을 따릅니다.

@@ -80,7 +80,7 @@ flowchart LR
 |---|---|---|
 | 캐시 키 불일치 시나리오 | 대기 | 한쪽 SpEL을 일부러 바꿔 기동 → PUT 후 GET이 옛 값을 주는지 관찰 (실험 후 원복) |
 | enabled 누락 PUT의 400 응답 | 대기 | `{}` 바디로 PUT → 상태코드·에러 메시지 확인 |
-| 계층 의존 규칙의 자동 가드 | 대기 | ArchUnit 룰(예: domain은 spring·jakarta import 금지) 추가 — Phase 2-1 테스트 작업과 병행 검토 |
+| 계층 의존 규칙의 자동 가드 | 대기 | ArchUnit 룰(예: domain은 spring·jakarta import 금지) 추가 — 2단계-1 테스트 작업과 병행 검토 |
 
 
 

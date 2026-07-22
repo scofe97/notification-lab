@@ -171,4 +171,4 @@ docker exec nlab-kafka /opt/kafka/bin/kafka-consumer-groups.sh \
   --bootstrap-server kafka:9094 --describe --group notification-service
 ```
 
-kafka-ui(`localhost:8100`)의 Consumers 화면에서도 같은 정보를 봅니다. Phase 3 관측 스터디의 UC-05(consumer lag)가 이 주제를 다룹니다.
+kafka-ui(`localhost:8100`)의 Consumers 화면에서도 같은 정보를 봅니다. 3단계 관측 스터디의 UC-05(consumer lag)가 이 주제를 다룹니다.

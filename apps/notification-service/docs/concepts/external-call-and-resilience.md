@@ -35,7 +35,7 @@ curl -X POST localhost:8110/__admin/requests/count -H "Content-Type: application
 
 마지막 요청 저널이 특히 중요합니다. **"차단되었는가"를 판정하는 관측 지점**이기 때문입니다. 회로가 열렸다면 호출이 외부로 나가지 않으므로, 시도 횟수보다 도달 수가 적어야 합니다. 실측에서 이 차이(9번 시도 중 5건 도달)로 차단이 실재함을 확인했습니다.
 
-지연 연출도 가능합니다 — 응답에 `"fixedDelayMilliseconds": 3000`을 넣으면 느린 외부를 흉내 냅니다. Phase 3의 지연 실험에서 씁니다.
+지연 연출도 가능합니다 — 응답에 `"fixedDelayMilliseconds": 3000`을 넣으면 느린 외부를 흉내 냅니다. 3단계의 지연 실험에서 씁니다.
 
 
 

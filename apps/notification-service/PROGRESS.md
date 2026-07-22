@@ -2,7 +2,7 @@
 
 이 문서는 구현 진행 지점·빌드 상태·중단 지점을 기록합니다. 프로젝트 개요는 [README.md](README.md), 개념 학습 기록은 [NOTES.md](NOTES.md), 설계(요구·유스케이스·아키텍처)는 [docs/](docs/)에 있습니다.
 
-**현재 상태**: UC-1 발송 파이프라인 완성 + 런타임 E2E 수동 검증 통과 (2026-07-09) = **Phase 1 완료**. 단계(Phase) 정의와 다음 국면(LGMT Observability)은 [../../ROADMAP.md](../../ROADMAP.md)가 SSOT입니다.
+**현재 상태**: UC-1 발송 파이프라인 완성 + 런타임 E2E 수동 검증 통과 (2026-07-09) = **1단계 완료**. 단계(Phase) 정의와 다음 국면(LGMT Observability)은 [../../ROADMAP.md](../../ROADMAP.md)가 SSOT입니다.
 
 ---
 
@@ -59,15 +59,15 @@
 
 ---
 
-## 남은 것 (Phase별 — [ROADMAP](../../ROADMAP.md) 순서)
+## 남은 것 (단계별 — [ROADMAP](../../ROADMAP.md) 순서)
 
-**Phase 2 — 알림 서비스 마무리**
-1. E2E 테스트(Testcontainers) 자동화 — Kafka 발행 → WireMock 발송 검증, 실패→회로차단+DLT, 캐시 히트. 2026-07-20 수동 실측을 자동 테스트로 박제 (Task #17, Phase 2-1). **다음 세션 시작점**
-2. UC-4 채널 설정 REST CRUD (Phase 2-2) · UC-2 외부 REST 발송 (Phase 2-3)
-3. 이력(`notification.history`) 패키지 — UC-3(조회)·UC-5(아카이빙)·SSL 재현 (Phase 2-4)
+**2단계 — 알림 서비스 마무리**
+1. E2E 테스트(Testcontainers) 자동화 — Kafka 발행 → WireMock 발송 검증, 실패→회로차단+DLT, 캐시 히트. 2026-07-20 수동 실측을 자동 테스트로 박제 (Task #17, 2단계-1). **다음 세션 시작점**
+2. UC-4 채널 설정 REST CRUD (2단계-2) · UC-2 외부 REST 발송 (2단계-3)
+3. 이력(`notification.history`) 패키지 — UC-3(조회)·UC-5(아카이빙)·SSL 재현 (2단계-4)
 
-**Phase 3 — LGMT Observability 스터디 (다음 국면, 1개월)**
-- 이 서비스를 관측 대상으로 Loki·Grafana·Mimir·Tempo를 도입하고 장애 실험을 진행합니다. 주차별 계획과 실험 UC는 [ROADMAP Phase 3](../../ROADMAP.md)에서 관리합니다. 목표 아키텍처는 [docs/03-architecture.md](docs/03-architecture.md) §9에 있습니다.
+**3단계 — LGMT Observability 스터디 (다음 국면, 1개월)**
+- 이 서비스를 관측 대상으로 Loki·Grafana·Mimir·Tempo를 도입하고 장애 실험을 진행합니다. 주차별 계획과 실험 UC는 [ROADMAP 3단계](../../ROADMAP.md)에서 관리합니다. 목표 아키텍처는 [docs/03-architecture.md](docs/03-architecture.md) §9에 있습니다.
 
 ---
 
