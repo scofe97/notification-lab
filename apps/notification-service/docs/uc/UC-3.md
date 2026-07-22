@@ -2,7 +2,7 @@
 
 발송 이력을 중계 조회하는 흐름입니다. UC 명세는 [../02-actors-usecases.md](../02-actors-usecases.md) §UC-3에 있습니다.
 
-- **상태**: 미구현 (`notification.history` 패키지에서 다룸. UC-5 아카이빙이 색인한 이력을 조회)
+- **상태**: 구현 + 스모크 검증 완료 (2026-07-22). 저장은 RDB(PostgreSQL) 선 구현 — OpenSearch는 `NotificationHistoryStorePort` 어댑터 교체 후보로 보류. 채널별 쿼리 매퍼(`QueryParamMapperFactory`)는 RDB 채택으로 생략(채널·기간 파라미터 쿼리로 충분)
 - **관련 FR**: FR-10
 - **주 액터**: 사용자
 - **학습 순서**: 선행 → [UC-5](UC-5.md)(아카이빙이 색인한 이력을 조회하므로 UC-5의 색인 구조를 먼저 안다). 번호는 명세 ID이며 진행 순서의 SSOT는 [ROADMAP](../../../../ROADMAP.md)이다.

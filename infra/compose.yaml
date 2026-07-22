@@ -2,6 +2,7 @@ name: notification-lab
 
 include:
   - path: compose/kafka.yaml
+  - path: compose/postgres.yaml
   - path: compose/opensearch.yaml
   - path: compose/redis.yaml
   - path: compose/mailhog.yaml

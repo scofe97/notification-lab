@@ -2,6 +2,7 @@ package com.practice.notification.send.application;
 
 import com.practice.notification.channel.domain.port.in.GetChannelSettingUseCase;
 import com.practice.notification.common.domain.ChannelType;
+import com.practice.notification.history.domain.port.in.RecordNotificationHistoryUseCase;
 import com.practice.notification.send.domain.model.NotificationEvent;
 import com.practice.notification.send.domain.model.SendResult;
 import com.practice.notification.send.domain.port.in.SendNotificationUseCase;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
  *   <li>수신자를 채널 타입별로 그룹핑 (FR-2)</li>
  *   <li>채널 설정을 조회해 수신 거부한 수신자 제외 (FR-3 — channel 컨텍스트의 in-port 경유, Caffeine 캐시)</li>
  *   <li>채널별 발송을 out-port에 위임 (FR-4·5 — Feign·회로차단기는 어댑터 뒤)</li>
+ *   <li>발송 이력 기록 (FR-8 — history 컨텍스트의 in-port 경유, best-effort)</li>
  * </ol>
  *
  * <p>실패는 예외가 아니라 {@link SendResult}의 실패 집계로 돌아옵니다({@link ChannelSendPort} 계약).
@@ -34,6 +36,7 @@ public class NotificationSendService implements SendNotificationUseCase {
 
     private final ChannelSendPort channelSendPort;
     private final GetChannelSettingUseCase channelSettingUseCase;
+    private final RecordNotificationHistoryUseCase recordNotificationHistoryUseCase;
 
     @Override
     public List<SendResult> send(NotificationEvent event) {
@@ -61,6 +64,11 @@ public class NotificationSendService implements SendNotificationUseCase {
         }
 
         // ③ 발송은 out-port에 위임 — 실패도 집계로 돌아온다
-        return channelSendPort.send(channelType, event.title(), event.content(), destinations);
+        SendResult result = channelSendPort.send(channelType, event.title(), event.content(), destinations);
+
+        // ④ 이력 기록 (FR-8) — best-effort 계약이라 기록 실패가 발송 결과를 바꾸지 않는다
+        recordNotificationHistoryUseCase.record(event.eventId(), channelType, destinations, result.allSucceeded());
+
+        return result;
     }
 }

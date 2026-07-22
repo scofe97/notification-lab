@@ -49,9 +49,12 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'com.github.ben-manes.caffeine:caffeine'
 
-    // ── 데이터 (채널 설정 — H2 파일 모드) ──
+    // ── 데이터 (채널 설정·발송 이력 — PostgreSQL, 2026-07-22 H2에서 전환) ──
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    runtimeOnly 'com.h2database:h2'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // ── 이력 ID (FR-9 — 시간순 정렬 가능한 ULID) ──
+    implementation 'com.github.f4b6a3:ulid-creator:5.2.3'
 
     // ── 기타 ──
     implementation 'org.springframework.boot:spring-boot-starter-validation'

@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nlab-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: notification
+      POSTGRES_USER: notification
+      # 로컬 학습용 기본값 — 실제 배포에서는 환경변수로만 주입 (NFR-5)
+      POSTGRES_PASSWORD: ${NOTIFICATION_DB_PASSWORD:-notification-local}
+    volumes:
+      - nlab-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notification -d notification"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  nlab-postgres-data:

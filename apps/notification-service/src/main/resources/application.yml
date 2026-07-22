@@ -6,19 +6,16 @@ spring:
   application:
     name: notification-service
 
-  # 채널 설정 저장용 H2 파일 모드
+  # 채널 설정·발송 이력 저장 — PostgreSQL (2026-07-22 H2에서 전환, NFR-5: 시크릿은 환경변수)
   datasource:
-    url: jdbc:h2:file:~/notification-lab-data/notification-service;AUTO_SERVER=TRUE
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://localhost:5432/notification}
+    username: ${NOTIFICATION_DB_USER:notification}
+    password: ${NOTIFICATION_DB_PASSWORD:notification-local}
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
     open-in-view: false
-  h2:
-    console:
-      enabled: true
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9192}
@@ -48,6 +45,11 @@ notification:
   # 수신자 조회 API도 WireMock으로 모사합니다 (UC-2)
   recipient:
     base-url: ${NOTIFICATION_RECIPIENT_URL:http://localhost:8110}
+  # 발송 이력 (UC-3 조회 · UC-5 아카이빙)
+  history:
+    # 매일 03:00에 전일 이력을 파일로 내보냅니다 (UC-5)
+    archive-cron: ${NOTIFICATION_HISTORY_ARCHIVE_CRON:0 0 3 * * *}
+    archive-dir: ${NOTIFICATION_HISTORY_ARCHIVE_DIR:./archive}
 
 # 회로차단기 (Resilience4j) — 발송 반복 실패 시 차단
 resilience4j:

@@ -19,7 +19,7 @@ Listener → Service → Channel setting / Remote client
 | 채널 설정 | 수신 채널 설정을 캐시 우선으로 조회합니다. | Caffeine, H2 |
 | 발송 클라이언트 | 외부 발송 API를 호출합니다. | OpenFeign, WireMock |
 | 회로 차단기 | 반복되는 외부 호출 실패를 차단합니다. | Resilience4j |
-| 이력·아카이빙 | 발송 결과를 조회·보관합니다. | 후속 범위 |
+| 이력·아카이빙 | 발송 결과를 조회·보관합니다. | PostgreSQL(JPA)·ULID·@Scheduled — 2026-07-22 구현 |
 
 ## 2. 현재 발송 파이프라인
 
@@ -61,7 +61,7 @@ flowchart TB
 | MailHog | 메일 수신 확인 | SMTP `1025`, UI `8025` |
 | MariaDB | 관측 스터디에서의 DB 병목 실험 | `observability` 프로필 |
 
-앱은 Undertow 기반으로 `8092`에서 실행합니다. 현재 채널 설정 저장소는 H2 파일 모드이며, MariaDB 전환은 관측 스터디의 후속 단계입니다.
+앱은 Undertow 기반으로 `8092`에서 실행합니다. 채널 설정·발송 이력 저장소는 PostgreSQL입니다(2026-07-22 H2에서 전환). 관측 스터디의 DB 병목 실험용 MariaDB는 별도 profile로 남아 있습니다.
 
 ### 3-1. WireMock — 외부 발송 API의 대역
 

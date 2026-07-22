@@ -7,3 +7,6 @@ build/
 # H2 파일 DB
 *.mv.db
 *.trace.db
+
+# UC-5 아카이브 산출물 (런타임 생성)
+archive/

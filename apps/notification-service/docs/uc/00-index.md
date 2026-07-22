@@ -8,16 +8,16 @@
 
 ## 문서 목록 · 구현 현황판
 
-구현 범위 열의 클래스는 전부 `src/main/java/com/practice/notification/send/` 아래에 있습니다. Phase 번호는 [../../../../ROADMAP.md](../../../../ROADMAP.md)의 단계입니다.
+구현 범위 열의 클래스는 `src/main/java/com/practice/notification/` 아래 컨텍스트별 패키지(send·channel·dispatch·history·common)에 있습니다. Phase 번호는 [../../../../ROADMAP.md](../../../../ROADMAP.md)의 단계입니다.
 
 | 문서 | UC | 상태 | 핵심 기술 | 구현 범위 (소스) | 검증 | 다음 작업 |
 |------|-----|------|-----------|------------------|------|-----------|
 | [UC-1.md](UC-1.md) | Kafka 알림 발송 | **구현+검증 완료** | @KafkaListener·Caffeine·OpenFeign·Resilience4j | `send` 전 패키지 — listener/`NotificationListener` · service/`NotificationSendService` · remote/`NotificationSendClient`·`NotificationSendCaller` · config/`KafkaConsumerConfig`·`CacheConfig` · domain 3종 — 및 `channel` 컨텍스트의 `ChannelSettingService`(2026-07-21 헥사고날 분리) | 수동 E2E (2026-07-09) + 실측 실습·회로차단 수정 검증 (2026-07-20) | E2E 자동화 — Testcontainers (2단계-1) |
 | [UC-1-dlt.md](UC-1-dlt.md) | └ 실패 경로(DLT 관찰) | **적재·재처리 실측 완료** | DeadLetterPublishingRecoverer | config/`KafkaConsumerConfig` (재시도 2회 → `notification.DLT`) | 독약·5xx 적재, 헤더 원인, 재처리 성공/실패 조건 확인 (2026-07-20) | 자동 재처리 도구는 3단계 후보 |
 | [UC-2.md](UC-2.md) | 외부 시스템 REST 발송 | **구현+스모크 검증** (2026-07-21) | OpenFeign(수신자 조회)·헥사고날 | `dispatch` 컨텍스트(api·application·domain+port·infrastructure) — send는 완충 어댑터로 재사용 | 스모크 — 200 집계·400·404, 조회→발송 카운트 연쇄 | 이해 루프 + 207/502 실측 |
-| [UC-3.md](UC-3.md) | 알림 이력 조회 | 미구현 | OpenSearch·채널별 매퍼 | 없음 (`history` 패키지 미생성) | — | OpenSearch 색인·조회 (2단계-4) |
+| [UC-3.md](UC-3.md) | 알림 이력 조회 | **구현+스모크 검증** (2026-07-22) | PostgreSQL(JPA)·ULID | `history` 컨텍스트 api·application·domain+port·infrastructure/persistence | 스모크 — 두 입구(REST·Kafka) 발송분 조회, 최신순 | 이해 루프 + OpenSearch 어댑터는 후속 후보 |
 | [UC-4.md](UC-4.md) | 알림채널 설정 | **구현+검증 완료** (2026-07-21) | JPA 복합키·REST CRUD·`@CachePut` | `channel` 컨텍스트(api·application·domain·infrastructure — 2026-07-21 헥사고날 분리) | 스모크 E2E — GET 기본값·PUT 즉시 반영 (캐시 갱신) | 400 응답·키 불일치 실측 + ArchUnit 가드 |
-| [UC-5.md](UC-5.md) | 로그 아카이빙 | 미구현 | @Scheduled·OpenSearch | 없음 | — | @Scheduled export (2단계-4) |
+| [UC-5.md](UC-5.md) | 로그 아카이빙 | **구현+스모크 검증** (2026-07-22) | @Scheduled·NDJSON export | `history` 컨텍스트 — 실시간 기록(FR-8) + cron·수동 재실행 export(FR-11) | 스모크 — 4건 export, NDJSON 파일 확인 | 이해 루프 + 저장소 삭제 정책 결정 |
 | [undertow.md](undertow.md) | (전역 기반) 내장 웹서버 | 적용 완료·실측 대기 | Undertow ↔ Tomcat | `build.gradle` (Tomcat 제외 + Undertow starter) | 기동 로그 `Undertow started on port 8092` 확인 | Tomcat 대비 실측 |
 
 > `undertow.md`는 특정 UC가 아니라 프로젝트 전역 기반이라 UC 번호 없이 둡니다. 지금 집중 연구 대상.

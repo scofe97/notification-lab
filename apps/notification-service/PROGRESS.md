@@ -9,7 +9,7 @@
 ## 완료
 
 ### 스캐폴딩
-- `build.gradle` — Java 21 toolchain, Spring Boot 3.5.0 + Undertow(Tomcat 제외), Spring Kafka, OpenFeign, Resilience4j, Caffeine, JPA+H2
+- `build.gradle` — Java 21 toolchain, Spring Boot 3.5.0 + Undertow(Tomcat 제외), Spring Kafka, OpenFeign, Resilience4j, Caffeine, JPA+PostgreSQL(2026-07-22 H2에서 전환)
 - `settings.gradle`, Gradle wrapper 8.10.2
 - `NotificationApplication` — `@EnableFeignClients`·`@EnableCaching`
 - `application.yml` — 앱 포트 8092, Kafka `localhost:9192`
@@ -26,6 +26,7 @@
 - `send/infrastructure/sendapi`: `NotificationSendClient`(Feign) · `SendRequest`·`SendResponse` · `NotificationSendCaller`(CB) · `ChannelSendAdapter`(예외→집계 변환)
 - `channel`(별도 컨텍스트, 2026-07-21 헥사고날 분리): domain/`ChannelSetting`+port · application/`ChannelSettingService`(`@Cacheable`) · infrastructure/`ChannelSettingEntity`(복합키)+어댑터 · api/REST
 - `dispatch`(신규 컨텍스트, 2026-07-21, UC-2): api/`DispatchController`(응답 코드 집계) · application/`DispatchService` · domain/`Recipient`·`ChannelDispatchResult`+port · infrastructure/수신자 조회 Feign + send 완충 어댑터
+- `history`(신규 컨텍스트, 2026-07-22, UC-3·UC-5): api/조회 REST+아카이브 스케줄러·수동 재실행 · application/기록(best-effort)·조회·아카이브 · domain/`NotificationHistory`(ULID)+port 5종 · infrastructure/persistence(PostgreSQL)+archive(NDJSON)
 - `send/application/NotificationSendService` — in-port 구현. 그룹핑·설정 필터·발송 위임 (실패는 집계로 반환)
 - `send/api/NotificationListener` — `@KafkaListener` 소비 → 역직렬화 → in-port 호출. 실패 집계를 예외로 번역(에러 핸들러가 DLT로)
 - `send/infrastructure/config/KafkaConsumerConfig` — `DefaultErrorHandler` + `DeadLetterPublishingRecoverer`(실패 → `notification.DLT`), 재시도 2회·1초 간격
