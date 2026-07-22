@@ -3,7 +3,8 @@
 이 문서는 UC-1(Kafka 알림 발송)을 **손으로 리뷰·관찰**하는 노트입니다. UC 명세(주 흐름·대안 흐름·시퀀스)는 [../02-actors-usecases.md](../02-actors-usecases.md) §UC-1에, 설계 근거는 [../03-architecture.md](../03-architecture.md)에 있습니다. 여기서는 **직접 확인하는 절차와 렌즈**만 둡니다.
 
 - **상태**: 구현 완료 + 런타임 E2E 수동 검증 통과 (2026-07-09, [../../PROGRESS.md](../../PROGRESS.md) 참조)
-- **관련 FR**: FR-1(소비)·FR-3(캐시)·FR-4(발송)·FR-5(실패 격리)·FR-6(로깅)
+- **관련 FR**: FR-1(소비)·FR-2(채널별 분류)·FR-3(캐시)·FR-4(발송)·FR-5(실패 격리)
+- **학습 순서**: 진입 UC(선행 없음). 후속 → [UC-4](UC-4.md)(이 파이프라인이 읽는 설정을 만든다)·[UC-2](UC-2.md)(이 발송 경로를 재사용한다). 번호는 명세 ID이며 진행 순서의 SSOT는 [ROADMAP](../../../../ROADMAP.md)이다.
 
 ---
 
@@ -31,7 +32,7 @@
 | `application.yml` `enable-auto-commit: false` + `ack-mode: record` | 자동 커밋을 왜 껐나 | 처리 성공해야만 커밋 → 유실 방지(NFR-4). auto-commit이면 처리 전에 커밋될 수 있음 |
 | `send/application/NotificationSendService` | 수신자를 **채널별로 그룹핑**하는 로직. 채널 설정(enabled=false)을 어디서 거르나 | 발송의 핵심 분기. 그룹핑 단위가 발송 호출 단위 |
 | `@Cacheable(key="#userId + ':' + #channelType")` (`ChannelSettingService`) | 캐시 키 조합이 맞나. 캐시 무효화(`@CacheEvict`)는 있나? | 설정 변경 시 캐시가 안 지워지면 옛 값으로 발송할 수 있음 (지금은 TTL 10분에만 의존 → 리뷰 포인트) |
-| `@CircuitBreaker(name="notificationSend")` (`remote/NotificationSendCaller.callSend`) | fallback이 없다. 회로 OPEN이면 무슨 일이? 그리고 이 메서드는 **왜 서비스가 아닌 별도 빈**에 있나 | fallback 미지정 → 예외(`CallNotPermittedException`)가 위로 전파 → 리스너 에러 핸들러가 DLT로. 별도 빈인 이유는 프록시 경유 — 서비스 내부 호출이면 어노테이션이 무력해진다 ([학습 문서 Phase 4](../learning/UC-1-kafka-notification.md) 실측 기록) |
+| `@CircuitBreaker(name="notificationSend")` (`send/infrastructure/sendapi/NotificationSendCaller.callSend`) | fallback이 없다. 회로 OPEN이면 무슨 일이? 그리고 이 메서드는 **왜 서비스가 아닌 별도 빈**에 있나 | fallback 미지정 → 예외(`CallNotPermittedException`)가 위로 전파 → 리스너 에러 핸들러가 DLT로. 별도 빈인 이유는 프록시 경유 — 서비스 내부 호출이면 어노테이션이 무력해진다 ([학습 문서 Phase 4](../learning/UC-1-kafka-notification.md) 실측 기록) |
 | `send/infrastructure/config/KafkaConsumerConfig` | 재시도 횟수(2회)·간격(1s)·DLT 토픽명(`{topic}.DLT`) | 재시도 정책이 곧 "몇 번 실패해야 포기하나"의 정의 |
 | `send/infrastructure/sendapi/NotificationSendClient` (Feign) | URL·API 키를 **하드코딩했나** placeholder인가 | 시크릿은 `application.yml` placeholder + 환경변수여야 함 (dev-standards) |
 

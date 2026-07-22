@@ -15,8 +15,10 @@
 
 | 문서 | 학습 단위 | 상태 | 다음 단계 |
 |------|-----------|------|-----------|
-| [UC-1 Kafka 알림 발송](UC-1-kafka-notification.md) | Kafka 소비·채널별 발송·재시도·DLT | **마무리 완료** (2026-07-20 — 5단계 통과, 후속 검증 7건 실측) | Phase 2-1 Testcontainers E2E로 자동화 |
+| [UC-1 Kafka 알림 발송](UC-1-kafka-notification.md) | Kafka 소비·채널별 발송·재시도·DLT | **마무리 완료** (2026-07-20 — 5단계 통과, 후속 검증 7건 실측) | 2단계-1 Testcontainers E2E로 자동화 |
 | [UC-4 알림채널 설정](UC-4-channel-setting.md) | REST 계약·@CachePut 갱신·헥사고날 구조 | **마무리 완료** (2026-07-21 — Phase 1~3 + 압축 인출 통과, Phase 4 생략) | 후속 검증 2건(400 응답·키 불일치) + ArchUnit 가드 |
 | [UC-2 외부 REST 발송](UC-2-rest-dispatch.md) | dispatch 컨텍스트·수신자 조회·동기 집계 | **마무리 완료** (2026-07-22 — 5단계 통과, 실측 2건·207 도달 불가 반증) | 결함 수정(실패 집계 수용) + send 헥사고날 전환 |
+| [UC-3 알림 이력 조회](UC-3-history-query.md) | OpenSearch 색인 조회·채널별 쿼리 매퍼 | **미착수** — 구현 전 스켈레톤 (구현 후 채움) | UC-5 색인 후 구현·5단계 진행 |
+| [UC-5 로그 아카이빙](UC-5-log-archiving.md) | @Scheduled 배치·전일 이력 export | **미착수** — 구현 전 스켈레톤 (구현 후 채움) | history 패키지 구현 후 5단계 진행 |
 
 개념 정리는 UC에 매이지 않으므로 [concepts/](../concepts/00-index.md)에 따로 둡니다.

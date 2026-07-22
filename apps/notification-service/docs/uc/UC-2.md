@@ -5,6 +5,7 @@
 - **상태**: 구현 + 스모크 검증 완료 (2026-07-21). 당초 메모(`notification.send`에 추가)와 달리 별도 헥사고날 컨텍스트 `notification.dispatch`(api·application·domain·infrastructure)로 구현 — [AGENTS.md](../../../../AGENTS.md) 컨벤션 첫 신규 적용. 응답 규칙: 수신자 없음 404 · 전 채널 성공 200 · 일부 실패 207 · 전부 실패 502 (207/502는 미실측)
 - **관련 FR**: FR-6
 - **주 액터**: 외부 시스템
+- **학습 순서**: 선행 → [UC-1](UC-1.md)(발송 경로를 그대로 재사용하므로 UC-1을 먼저 이해해야 한다). 번호는 명세 ID이며 진행 순서의 SSOT는 [ROADMAP](../../../../ROADMAP.md)이다.
 
 ---
 
