@@ -1,6 +1,6 @@
 package com.practice.notification.channel.domain.model;
 
-import com.practice.notification.send.domain.ChannelType;
+import com.practice.notification.common.domain.ChannelType;
 
 /**
  * 수신자의 채널별 수신 설정입니다 — 순수 도메인 모델.

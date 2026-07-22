@@ -20,7 +20,7 @@
 | 도메인 모델 | `channel/domain/model/ChannelSetting.java` | 순수 POJO. 프레임워크 import 없음 |
 | out-port | `channel/domain/port/out/ChannelSettingPort.java` | 도메인이 선언한 영속 인터페이스 |
 | JPA 어댑터 | `channel/infrastructure/persistence/ChannelSettingEntity·JpaRepository·PersistenceAdapter.java` | `channel_setting` 테이블 매핑과 out-port 구현, 엔티티↔도메인 변환. 2026-07-22 대상별 하위 패키지로 재배치 |
-| 소비자 (UC-1) | `send/service/NotificationSendService.java` | `GetChannelSettingUseCase`를 주입받아 수신거부 필터링 |
+| 소비자 (UC-1) | `send/application/NotificationSendService.java` | `GetChannelSettingUseCase`를 주입받아 수신거부 필터링 |
 
 ```mermaid
 flowchart LR

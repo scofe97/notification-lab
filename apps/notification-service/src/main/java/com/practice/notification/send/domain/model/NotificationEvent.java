@@ -1,4 +1,6 @@
-package com.practice.notification.send.domain;
+package com.practice.notification.send.domain.model;
+
+import com.practice.notification.common.domain.ChannelType;
 
 import java.util.List;
 

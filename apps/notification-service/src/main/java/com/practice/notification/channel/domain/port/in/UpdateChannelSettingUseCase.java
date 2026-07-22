@@ -1,6 +1,6 @@
 package com.practice.notification.channel.domain.port.in;
 
-import com.practice.notification.send.domain.ChannelType;
+import com.practice.notification.common.domain.ChannelType;
 
 /**
  * 채널 수신 설정 저장 유스케이스(in-port)입니다(UC-4, FR-12).

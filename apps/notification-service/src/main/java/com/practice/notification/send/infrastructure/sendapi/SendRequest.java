@@ -1,4 +1,4 @@
-package com.practice.notification.send.remote;
+package com.practice.notification.send.infrastructure.sendapi;
 
 import java.util.List;
 

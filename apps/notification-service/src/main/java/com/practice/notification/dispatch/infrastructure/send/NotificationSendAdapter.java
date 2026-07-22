@@ -3,9 +3,9 @@ package com.practice.notification.dispatch.infrastructure.send;
 import com.practice.notification.dispatch.domain.model.ChannelDispatchResult;
 import com.practice.notification.dispatch.domain.model.Recipient;
 import com.practice.notification.dispatch.domain.port.out.NotificationSendPort;
-import com.practice.notification.send.domain.NotificationEvent;
-import com.practice.notification.send.domain.SendResult;
-import com.practice.notification.send.service.NotificationSendService;
+import com.practice.notification.send.domain.model.NotificationEvent;
+import com.practice.notification.send.domain.model.SendResult;
+import com.practice.notification.send.domain.port.in.SendNotificationUseCase;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +14,10 @@ import org.springframework.stereotype.Component;
 /**
  * {@link NotificationSendPort}의 구현체입니다 — send 컨텍스트 완충 어댑터.
  *
- * <p>dispatch의 수신자 목록을 send의 {@link NotificationEvent}로 조립해 기존 발송 서비스에
- * 위임합니다. 채널 그룹핑·설정 캐시 필터·회로차단기는 전부 그쪽 경로를 재사용합니다.
- * send가 in-port 없는 레거시 구조라 구체 클래스를 여기서만 알고, 도메인에는 새지 않게 합니다.
+ * <p>dispatch의 수신자 목록을 send의 {@link NotificationEvent}로 조립해 send의
+ * in-port({@link SendNotificationUseCase})에 위임합니다. 채널 그룹핑·설정 캐시 필터·회로차단기는
+ * 전부 그쪽 경로를 재사용하고, 결과는 dispatch의 언어({@code ChannelDispatchResult})로 역번역합니다.
+ * 실패는 집계로 돌아오므로(2026-07-22 실패 계약) 예외 관통 없이 207/502 분기가 동작합니다.
  */
 @Component
 @RequiredArgsConstructor
@@ -24,7 +25,7 @@ public class NotificationSendAdapter implements NotificationSendPort {
 
     private static final String EVENT_ID_PREFIX = "rest-";
 
-    private final NotificationSendService notificationSendService;
+    private final SendNotificationUseCase sendNotificationUseCase;
 
     @Override
     public List<ChannelDispatchResult> send(String title, String content, List<Recipient> recipients) {
@@ -34,7 +35,7 @@ public class NotificationSendAdapter implements NotificationSendPort {
         NotificationEvent event = new NotificationEvent(
                 EVENT_ID_PREFIX + UUID.randomUUID(), title, content, receivers);
 
-        return notificationSendService.send(event).stream()
+        return sendNotificationUseCase.send(event).stream()
                 .map(this::toDomain)
                 .toList();
     }

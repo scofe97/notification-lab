@@ -22,14 +22,14 @@
 - WireMock 발송 성공 스텁: `~/notification-lab/infra/wiremock/mappings/send-success.json`
 
 ### UC-1 발송 파이프라인 (컴파일 통과) — 전부 `notification.send` 하위
-- `send/domain`: `ChannelType` · `NotificationEvent` · `SendResult`
-- `send/remote`: `NotificationSendClient`(Feign) · `SendRequest` · `SendResponse`
+- `common/domain/ChannelType`(공유 커널, 2026-07-22 승격) · `send/domain`: model(`NotificationEvent`·`SendResult`) + port(in `SendNotificationUseCase` · out `ChannelSendPort`)
+- `send/infrastructure/sendapi`: `NotificationSendClient`(Feign) · `SendRequest`·`SendResponse` · `NotificationSendCaller`(CB) · `ChannelSendAdapter`(예외→집계 변환)
 - `channel`(별도 컨텍스트, 2026-07-21 헥사고날 분리): domain/`ChannelSetting`+port · application/`ChannelSettingService`(`@Cacheable`) · infrastructure/`ChannelSettingEntity`(복합키)+어댑터 · api/REST
 - `dispatch`(신규 컨텍스트, 2026-07-21, UC-2): api/`DispatchController`(응답 코드 집계) · application/`DispatchService` · domain/`Recipient`·`ChannelDispatchResult`+port · infrastructure/수신자 조회 Feign + send 완충 어댑터
-- `send/service`: `NotificationSendService`(채널 그룹핑 + `@CircuitBreaker` 발송)
-- `send/listener/NotificationListener` — `@KafkaListener`로 `notification` 토픽 소비 → JSON 역직렬화 → `send()` 호출. 예외를 잡지 않음(에러 핸들러가 DLT로)
-- `send/config/KafkaConsumerConfig` — `DefaultErrorHandler` + `DeadLetterPublishingRecoverer`(실패 → `notification.DLT`), 재시도 2회·1초 간격
-- `send/config/CacheConfig` — Caffeine(TTL 10분·최대 10,000)
+- `send/application/NotificationSendService` — in-port 구현. 그룹핑·설정 필터·발송 위임 (실패는 집계로 반환)
+- `send/api/NotificationListener` — `@KafkaListener` 소비 → 역직렬화 → in-port 호출. 실패 집계를 예외로 번역(에러 핸들러가 DLT로)
+- `send/infrastructure/config/KafkaConsumerConfig` — `DefaultErrorHandler` + `DeadLetterPublishingRecoverer`(실패 → `notification.DLT`), 재시도 2회·1초 간격
+- `channel/infrastructure/config/CacheConfig` — Caffeine(TTL 10분·최대 10,000)
 
 ---
 

@@ -27,13 +27,13 @@
 
 | 파일 | 볼 것 (리뷰 렌즈) | 왜 중요한가 |
 |------|------------------|-------------|
-| `send/listener/NotificationListener` | **예외를 잡지 않는다**(try-catch 없음). 잡으면 어떻게 되나? | 잡아서 삼키면 실패가 성공으로 오프셋 커밋돼 메시지가 사라진다. "안 잡는 게 의도"임을 이해했는지 |
+| `send/api/NotificationListener` | **예외를 잡지 않는다**(try-catch 없음). 잡으면 어떻게 되나? | 잡아서 삼키면 실패가 성공으로 오프셋 커밋돼 메시지가 사라진다. "안 잡는 게 의도"임을 이해했는지 |
 | `application.yml` `enable-auto-commit: false` + `ack-mode: record` | 자동 커밋을 왜 껐나 | 처리 성공해야만 커밋 → 유실 방지(NFR-4). auto-commit이면 처리 전에 커밋될 수 있음 |
-| `send/service/NotificationSendService` | 수신자를 **채널별로 그룹핑**하는 로직. 채널 설정(enabled=false)을 어디서 거르나 | 발송의 핵심 분기. 그룹핑 단위가 발송 호출 단위 |
+| `send/application/NotificationSendService` | 수신자를 **채널별로 그룹핑**하는 로직. 채널 설정(enabled=false)을 어디서 거르나 | 발송의 핵심 분기. 그룹핑 단위가 발송 호출 단위 |
 | `@Cacheable(key="#userId + ':' + #channelType")` (`ChannelSettingService`) | 캐시 키 조합이 맞나. 캐시 무효화(`@CacheEvict`)는 있나? | 설정 변경 시 캐시가 안 지워지면 옛 값으로 발송할 수 있음 (지금은 TTL 10분에만 의존 → 리뷰 포인트) |
 | `@CircuitBreaker(name="notificationSend")` (`remote/NotificationSendCaller.callSend`) | fallback이 없다. 회로 OPEN이면 무슨 일이? 그리고 이 메서드는 **왜 서비스가 아닌 별도 빈**에 있나 | fallback 미지정 → 예외(`CallNotPermittedException`)가 위로 전파 → 리스너 에러 핸들러가 DLT로. 별도 빈인 이유는 프록시 경유 — 서비스 내부 호출이면 어노테이션이 무력해진다 ([학습 문서 Phase 4](../learning/UC-1-kafka-notification.md) 실측 기록) |
-| `send/config/KafkaConsumerConfig` | 재시도 횟수(2회)·간격(1s)·DLT 토픽명(`{topic}.DLT`) | 재시도 정책이 곧 "몇 번 실패해야 포기하나"의 정의 |
-| `send/remote/NotificationSendClient` (Feign) | URL·API 키를 **하드코딩했나** placeholder인가 | 시크릿은 `application.yml` placeholder + 환경변수여야 함 (dev-standards) |
+| `send/infrastructure/config/KafkaConsumerConfig` | 재시도 횟수(2회)·간격(1s)·DLT 토픽명(`{topic}.DLT`) | 재시도 정책이 곧 "몇 번 실패해야 포기하나"의 정의 |
+| `send/infrastructure/sendapi/NotificationSendClient` (Feign) | URL·API 키를 **하드코딩했나** placeholder인가 | 시크릿은 `application.yml` placeholder + 환경변수여야 함 (dev-standards) |
 
 **스스로 던질 질문 3개**:
 1. 이 메시지가 처리 도중 죽으면(앱 kill) 다시 소비되나, 유실되나? → 커밋 시점을 따라가 답한다.

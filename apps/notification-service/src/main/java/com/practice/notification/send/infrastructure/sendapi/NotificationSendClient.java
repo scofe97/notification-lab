@@ -1,4 +1,4 @@
-package com.practice.notification.send.remote;
+package com.practice.notification.send.infrastructure.sendapi;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;

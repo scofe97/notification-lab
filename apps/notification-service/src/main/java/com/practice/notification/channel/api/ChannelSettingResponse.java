@@ -1,6 +1,6 @@
 package com.practice.notification.channel.api;
 
-import com.practice.notification.send.domain.ChannelType;
+import com.practice.notification.common.domain.ChannelType;
 
 /**
  * 채널 설정 조회 응답입니다(FR-12).

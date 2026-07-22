@@ -1,4 +1,4 @@
-package com.practice.notification.send.config;
+package com.practice.notification.channel.infrastructure.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.time.Duration;

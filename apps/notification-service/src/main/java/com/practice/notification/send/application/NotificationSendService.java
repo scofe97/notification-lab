@@ -1,11 +1,11 @@
-package com.practice.notification.send.service;
+package com.practice.notification.send.application;
 
 import com.practice.notification.channel.domain.port.in.GetChannelSettingUseCase;
-import com.practice.notification.send.domain.ChannelType;
-import com.practice.notification.send.domain.NotificationEvent;
-import com.practice.notification.send.domain.SendResult;
-import com.practice.notification.send.remote.NotificationSendCaller;
-import com.practice.notification.send.remote.SendRequest;
+import com.practice.notification.common.domain.ChannelType;
+import com.practice.notification.send.domain.model.NotificationEvent;
+import com.practice.notification.send.domain.model.SendResult;
+import com.practice.notification.send.domain.port.in.SendNotificationUseCase;
+import com.practice.notification.send.domain.port.out.ChannelSendPort;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -14,27 +14,28 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * 알림 이벤트를 채널별로 분기해 발송하는 코어 서비스입니다.
+ * 알림 발송 유스케이스 구현(application 계층)입니다.
  *
  * <p>처리 흐름:
  * <ol>
  *   <li>수신자를 채널 타입별로 그룹핑 (FR-2)</li>
- *   <li>채널 설정을 조회해 수신 거부한 수신자 제외 (FR-3, Caffeine 캐시)</li>
- *   <li>채널별로 외부 발송 API 호출 (FR-4, OpenFeign)</li>
- *   <li>발송 호출은 회로차단기로 감쌈 (FR-5, Resilience4j)</li>
+ *   <li>채널 설정을 조회해 수신 거부한 수신자 제외 (FR-3 — channel 컨텍스트의 in-port 경유, Caffeine 캐시)</li>
+ *   <li>채널별 발송을 out-port에 위임 (FR-4·5 — Feign·회로차단기는 어댑터 뒤)</li>
  * </ol>
+ *
+ * <p>실패는 예외가 아니라 {@link SendResult}의 실패 집계로 돌아옵니다({@link ChannelSendPort} 계약).
+ * 이 계층은 실패에 의미를 부여하지 않고 사실만 모아 돌려줍니다 — 재시도(예외)로 해석할지
+ * 응답 코드(207)로 해석할지는 입구 어댑터의 몫입니다.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NotificationSendService {
+public class NotificationSendService implements SendNotificationUseCase {
 
-    private final NotificationSendCaller sendCaller;
+    private final ChannelSendPort channelSendPort;
     private final GetChannelSettingUseCase channelSettingUseCase;
 
-    /**
-     * 이벤트의 수신자를 채널별로 그룹핑해 각 채널로 발송하고, 채널별 결과를 돌려줍니다.
-     */
+    @Override
     public List<SendResult> send(NotificationEvent event) {
         // ① 채널 타입별 그룹핑
         Map<ChannelType, List<NotificationEvent.Receiver>> byChannel = event.receivers().stream()
@@ -59,8 +60,7 @@ public class NotificationSendService {
             return SendResult.of(channelType, 0, 0);
         }
 
-        // ③④ 회로차단기로 감싼 발송 — 프록시를 거치도록 별도 빈(NotificationSendCaller)에 위임
-        SendRequest request = new SendRequest(event.title(), event.content(), destinations);
-        return sendCaller.callSend(channelType, request);
+        // ③ 발송은 out-port에 위임 — 실패도 집계로 돌아온다
+        return channelSendPort.send(channelType, event.title(), event.content(), destinations);
     }
 }

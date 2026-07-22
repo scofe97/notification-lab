@@ -2,7 +2,7 @@ package com.practice.notification.channel.infrastructure.persistence;
 
 import com.practice.notification.channel.domain.model.ChannelSetting;
 import com.practice.notification.channel.domain.port.out.ChannelSettingPort;
-import com.practice.notification.send.domain.ChannelType;
+import com.practice.notification.common.domain.ChannelType;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

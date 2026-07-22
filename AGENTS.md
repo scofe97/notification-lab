@@ -8,7 +8,7 @@
 
 ```text
 <context>/
-├── api/              # inbound adapter — REST Controller·요청/응답 DTO. in-port만 호출
+├── api/              # inbound adapter — REST Controller·Kafka Consumer·요청/응답 DTO. in-port만 호출
 ├── application/      # 유스케이스 구현 — in-port 구현체. 도메인 조합 + out-port 호출.
 │                     #   @Service·@Transactional·@Cacheable 등 Spring 어노테이션 허용
 ├── domain/
@@ -29,12 +29,12 @@ infrastructure 하위 패키지 규칙 (2026-07-22): 한 어댑터를 이루는 
 - 의존 방향: `api → application → domain ← infrastructure` (infrastructure가 domain의 out-port를 구현하는 역의존).
 - domain은 어떤 프레임워크도 import하지 않는다. 다른 컨텍스트 진입은 반드시 그쪽 in-port로만 한다 — 예: 발송 파이프라인은 `GetChannelSettingUseCase`를 주입받고, `ChannelSettingService` 구체 클래스를 모른다.
 - JPA 엔티티는 infrastructure 전용이다. 클래스명이 테이블명을 암묵 결정하지 않도록 `@Table(name = ...)`을 명시한다.
-- 공유 커널: `ChannelType`은 발송·설정 두 컨텍스트가 공유하는 순수 enum으로, 당분간 `send.domain`에 둔다. 셋째 컨텍스트가 쓰게 되면 공용 패키지로 승격을 검토한다.
+- 공유 커널: 세 컨텍스트 이상이 쓰는 순수 타입은 `common/domain/`으로 승격한다. `ChannelType`이 첫 사례다(2026-07-22 승격 — send·channel·dispatch 공유). `common`에는 프레임워크 import 없는 순수 타입만 둔다.
+- 입구별 실패 의미론: 발송 같은 공용 유스케이스의 실패는 in-port에서 **집계로 반환**하고, 예외(재시도·DLT)로 해석할지 응답 코드(207/502)로 해석할지는 **입구 어댑터가 번역**한다 (2026-07-22 — UC-2 반증 실측의 교훈).
 
 ## 적용 범위
 
-- 신규 코드·신규 컨텍스트: 즉시 적용.
-- 기존 `send` 패키지(UC-1 발송 파이프라인): 레거시 계층 구조를 당분간 유지한다. 별도 UC로 전환하기 전까지 구조 변경 금지 — 학습 문서(`docs/learning/UC-1-*`)가 현재 파일 경로를 참조한다.
+- **전 컨텍스트 적용 완료** (2026-07-22) — send·channel·dispatch 모두 이 구조를 따른다. 신규 코드·신규 컨텍스트도 즉시 적용.
 
 ## 원본 컨벤션 출처
 

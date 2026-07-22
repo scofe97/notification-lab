@@ -1,7 +1,7 @@
 package com.practice.notification.dispatch.infrastructure.recipient;
 
 import com.practice.notification.dispatch.domain.model.Recipient;
-import com.practice.notification.send.domain.ChannelType;
+import com.practice.notification.common.domain.ChannelType;
 
 /**
  * 수신자 조회 API의 응답 한 건입니다 — 어댑터 내부 전송 모델.

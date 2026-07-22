@@ -10,7 +10,7 @@
 
 DLT는 "죽은 메시지를 버리지 않고 격리해 두는 보관함"입니다. 그다음 처리(재처리·알림·폐기)는 **사람 또는 별도 소비자의 몫**입니다. 이 경계 — "적재까지가 이 프로젝트 범위, 그다음은 운영 정책" — 를 이해하는 게 DLT 개념의 핵심입니다.
 
-메시지가 DLT로 가는 경로 (코드 근거: `send/config/KafkaConsumerConfig`):
+메시지가 DLT로 가는 경로 (코드 근거: `send/infrastructure/config/KafkaConsumerConfig`):
 ```
 리스너에서 예외 → DefaultErrorHandler가 재시도(1초 간격 2회)
   → 소진되면 DeadLetterPublishingRecoverer가 실패 메시지를 {topic}.DLT 로 발행

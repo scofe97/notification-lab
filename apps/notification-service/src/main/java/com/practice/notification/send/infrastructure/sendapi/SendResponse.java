@@ -1,4 +1,4 @@
-package com.practice.notification.send.remote;
+package com.practice.notification.send.infrastructure.sendapi;
 
 /**
  * 외부 발송 API 응답입니다. WireMock 스텁이 돌려주는 형태에 맞춥니다.

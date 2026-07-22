@@ -1,6 +1,6 @@
 package com.practice.notification.dispatch.domain.model;
 
-import com.practice.notification.send.domain.ChannelType;
+import com.practice.notification.common.domain.ChannelType;
 
 /**
  * 채널 하나의 발송 결과 집계입니다 — 순수 도메인 모델.

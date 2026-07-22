@@ -2,7 +2,7 @@ package com.practice.notification.channel.api;
 
 import com.practice.notification.channel.domain.port.in.GetChannelSettingUseCase;
 import com.practice.notification.channel.domain.port.in.UpdateChannelSettingUseCase;
-import com.practice.notification.send.domain.ChannelType;
+import com.practice.notification.common.domain.ChannelType;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

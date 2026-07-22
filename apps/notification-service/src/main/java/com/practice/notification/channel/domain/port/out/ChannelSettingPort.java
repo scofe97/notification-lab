@@ -1,7 +1,7 @@
 package com.practice.notification.channel.domain.port.out;
 
 import com.practice.notification.channel.domain.model.ChannelSetting;
-import com.practice.notification.send.domain.ChannelType;
+import com.practice.notification.common.domain.ChannelType;
 import java.util.Optional;
 
 /**

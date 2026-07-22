@@ -1,6 +1,6 @@
 package com.practice.notification.dispatch.domain.model;
 
-import com.practice.notification.send.domain.ChannelType;
+import com.practice.notification.common.domain.ChannelType;
 
 /**
  * 발송 대상 수신자 한 명입니다 — 순수 도메인 모델.

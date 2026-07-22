@@ -1,4 +1,4 @@
-package com.practice.notification.send.config;
+package com.practice.notification.send.infrastructure.config;
 
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.context.annotation.Bean;

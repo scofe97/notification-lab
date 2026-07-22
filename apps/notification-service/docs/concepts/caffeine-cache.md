@@ -20,7 +20,7 @@ Caffeine은 자바 진영의 표준 로컬 캐시 라이브러리입니다. Guav
 
 > 캐시는 반드시 버리는 규칙과 함께 삽니다. 상한 없는 캐시는 메모리 누수의 다른 이름입니다.
 
-스펙은 `send/config/CacheConfig.java`에서 정의합니다.
+스펙은 `channel/infrastructure/config/CacheConfig.java`에서 정의합니다.
 
 ```java
 cacheManager.setCaffeine(Caffeine.newBuilder()

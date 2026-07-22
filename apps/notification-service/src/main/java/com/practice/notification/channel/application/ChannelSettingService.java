@@ -4,7 +4,7 @@ import com.practice.notification.channel.domain.model.ChannelSetting;
 import com.practice.notification.channel.domain.port.in.GetChannelSettingUseCase;
 import com.practice.notification.channel.domain.port.in.UpdateChannelSettingUseCase;
 import com.practice.notification.channel.domain.port.out.ChannelSettingPort;
-import com.practice.notification.send.domain.ChannelType;
+import com.practice.notification.common.domain.ChannelType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CachePut;
