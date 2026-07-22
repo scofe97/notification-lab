@@ -16,9 +16,13 @@
 │   └── port/
 │       ├── in/       # 유스케이스 인터페이스. 외부(api·타 컨텍스트)가 이걸로 진입
 │       └── out/      # 저장소·외부시스템 인터페이스. 도메인이 선언, infrastructure가 구현
-└── infrastructure/   # outbound adapter — JPA Entity·Spring Data Repository·Port 구현체.
-                      #   엔티티↔도메인 변환은 어댑터 안에서 끝낸다
+└── infrastructure/   # outbound adapter — 대상 시스템별 하위 패키지로 나눈다 (평면 배치 금지)
+    ├── persistence/  #   JPA Entity·Spring Data Repository·영속 Port 구현체
+    └── <외부시스템>/  #   외부 API별 하위 패키지 (예: recipient/, send/) —
+                      #   Feign 클라이언트·전송 DTO·Port 구현체를 같은 곳에
 ```
+
+infrastructure 하위 패키지 규칙 (2026-07-22): 한 어댑터를 이루는 클라이언트·전송 모델·Port 구현체는 **대상 시스템 단위의 같은 하위 패키지**에 둔다. "이 폴더 = 이 외부 시스템과의 연결 전부"가 되게 하고, 엔티티↔도메인 변환은 그 하위 패키지 안에서 끝낸다.
 
 ## 의존 규칙
 

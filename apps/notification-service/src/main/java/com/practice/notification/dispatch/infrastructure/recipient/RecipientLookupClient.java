@@ -1,4 +1,4 @@
-package com.practice.notification.dispatch.infrastructure;
+package com.practice.notification.dispatch.infrastructure.recipient;
 
 import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;

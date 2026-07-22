@@ -19,8 +19,8 @@
 | in-port | `dispatch/domain/port/in/DispatchNotificationUseCase.java` | REST 어댑터의 진입 인터페이스 |
 | 도메인 모델 | `dispatch/domain/model/Recipient·ChannelDispatchResult.java` | 순수 POJO. send의 SendResult와 분리된 자체 결과 타입 |
 | out-port 2개 | `dispatch/domain/port/out/RecipientLookupPort·NotificationSendPort.java` | 수신자 조회 요구 / 발송 요구 — 도메인이 선언 |
-| 조회 어댑터 | `dispatch/infrastructure/RecipientLookupClient·Adapter.java` | Feign으로 `GET /recipients/{groupId}` 호출 |
-| 발송 완충 어댑터 | `dispatch/infrastructure/NotificationSendAdapter.java` | NotificationEvent(`rest-UUID`) 조립 후 send의 기존 발송 서비스에 위임 |
+| 조회 어댑터 | `dispatch/infrastructure/recipient/RecipientLookupClient·Response·Adapter.java` | Feign으로 `GET /recipients/{groupId}` 호출. 2026-07-22 대상별 하위 패키지로 재배치 |
+| 발송 완충 어댑터 | `dispatch/infrastructure/send/NotificationSendAdapter.java` | NotificationEvent(`rest-UUID`) 조립 후 send의 기존 발송 서비스에 위임 |
 
 ```mermaid
 flowchart LR

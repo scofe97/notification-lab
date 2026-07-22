@@ -1,4 +1,4 @@
-package com.practice.notification.dispatch.infrastructure;
+package com.practice.notification.dispatch.infrastructure.recipient;
 
 import com.practice.notification.dispatch.domain.model.Recipient;
 import com.practice.notification.dispatch.domain.port.out.RecipientLookupPort;

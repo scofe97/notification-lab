@@ -1,4 +1,4 @@
-package com.practice.notification.dispatch.infrastructure;
+package com.practice.notification.dispatch.infrastructure.send;
 
 import com.practice.notification.dispatch.domain.model.ChannelDispatchResult;
 import com.practice.notification.dispatch.domain.model.Recipient;

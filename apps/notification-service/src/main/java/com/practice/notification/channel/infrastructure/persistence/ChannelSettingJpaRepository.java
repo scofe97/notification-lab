@@ -1,4 +1,4 @@
-package com.practice.notification.channel.infrastructure;
+package com.practice.notification.channel.infrastructure.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
