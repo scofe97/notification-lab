@@ -51,7 +51,7 @@ notification-lab/
 
 - **문서 위치**: 설계 문서는 그 대상의 `docs/` 안에 둔다 — 서비스 설계는 `apps/notification-service/docs/`, 관측 설계는 `observability/docs/`. 루트에 범용 `docs/`를 다시 만들지 않는다.
 - **파일명 규칙은 폴더 성격을 따른다** (통일 강제 안 함): 읽는 순서가 있는 설계 문서는 `NN-` prefix(`00-`,`01-`), UC에 1:1 매인 문서는 `UC-N`, 순서·UC 무관한 개념은 prefix 없음. 각 폴더 `00-index.md`가 그 규칙을 설명한다.
-- **SSOT 분리**: 전체 단계는 루트 `ROADMAP.md`, 각 앱의 모듈 계획은 그 앱의 `ROADMAP.md`(루트를 역참조). 전체 진입점은 루트 `OVERVIEW.md`.
+- **SSOT 분리**: 전체 단계는 루트 `ROADMAP.md`, 각 앱의 모듈 계획은 그 앱의 `ROADMAP.md`(루트를 역참조). 전체 진입점(목적·아키텍처·단계·여정)은 루트 `README.md`.
 - **패키지**: 모든 소스·테스트는 `com.practice.notification.*`. 조직명(`okestro` 등)을 경로·패키지에 두지 않는다.
 
 ## 원본 컨벤션 출처
