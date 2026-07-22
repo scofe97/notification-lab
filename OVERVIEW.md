@@ -20,7 +20,7 @@ flowchart LR
     PROD["상류 시스템 ·<br>Scenario Runner"] -->|이벤트| KAFKA["Kafka<br>notification"]
     EXT["외부 시스템"] -->|"REST /api/dispatch"| SVC
     KAFKA --> SVC["notification-service<br>(관측 대상)"]
-    SVC -->|"설정 조회"| CACHE["Caffeine → H2"]
+    SVC -->|"설정 조회"| CACHE["Caffeine → PostgreSQL"]
     SVC -->|"발송 (CircuitBreaker)"| WM["WireMock ·<br>MailHog"]
     SVC -. "재시도 소진" .-> DLT["notification.DLT"]
     SVC -. "신호 배출" .-> OBS["LGMT<br>Loki·Grafana·Mimir·Tempo"]

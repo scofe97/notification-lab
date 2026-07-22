@@ -32,7 +32,7 @@
 | NFR-3 | 발송 대체 | WireMock과 MailHog로 외부 발송을 검증한다 |
 | NFR-4 | 메시지 유실 방지 | 소비·발송 실패는 재시도 후 DLT로 격리한다 |
 | NFR-5 | 시크릿 | 목 API 키·URL은 환경변수로 주입한다 |
-| NFR-6 | 데이터 | 채널 설정은 H2 파일모드를 쓰고, 이력은 OpenSearch에 둔다 |
+| NFR-6 | 데이터 | 채널 설정·발송 이력은 PostgreSQL에 저장한다 (2026-07-22 H2에서 전환). OpenSearch 색인은 후속 후보 |
 | NFR-7 | 검색 | 로컬 OpenSearch single-node에서 이력을 조회한다 |
 | NFR-8 | SSL 안전성 | SSL 검증 우회는 로컬 학습 대상으로만 제한하고 위험성을 문서화한다 |
 

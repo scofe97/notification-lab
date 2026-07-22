@@ -16,7 +16,7 @@ Listener → Service → Channel setting / Remote client
 |---|---|---|
 | 알림 리스너 | Kafka 토픽을 소비하고 처리 실패를 DLT로 격리합니다. | `@KafkaListener`, `DefaultErrorHandler` |
 | 발송 서비스 | 수신자·채널별 발송 흐름을 조율합니다. | `NotificationSendService` |
-| 채널 설정 | 수신 채널 설정을 캐시 우선으로 조회합니다. | Caffeine, H2 |
+| 채널 설정 | 수신 채널 설정을 캐시 우선으로 조회합니다. | Caffeine, PostgreSQL |
 | 발송 클라이언트 | 외부 발송 API를 호출합니다. | OpenFeign, WireMock |
 | 회로 차단기 | 반복되는 외부 호출 실패를 차단합니다. | Resilience4j |
 | 이력·아카이빙 | 발송 결과를 조회·보관합니다. | PostgreSQL(JPA)·ULID·@Scheduled — 2026-07-22 구현 |
@@ -28,7 +28,7 @@ flowchart TB
     K["Kafka<br/>notification 토픽"] -->|"1. 이벤트 소비"| L["NotificationListener<br/>@KafkaListener"]
     L -->|"2. 발송 조율"| S["NotificationSendService"]
     S -->|"3. 설정 조회"| C["Caffeine 캐시"]
-    C -. "cache miss" .-> DB[("H2<br/>채널 설정")]
+    C -. "cache miss" .-> DB[("PostgreSQL<br/>채널 설정")]
     S -->|"4. 발송 요청"| R["OpenFeign client"]
     R -->|"5. 실패 보호"| CB["Resilience4j"]
     CB -->|"6. HTTP"| W["WireMock<br/>외부 발송 API 모사"]
@@ -59,9 +59,9 @@ flowchart TB
 | Redis | 캐시·상태 실험의 선택 구성요소 | `localhost:6379` |
 | OpenSearch | 이력 색인 실험의 선택 구성요소 | `localhost:9200` |
 | MailHog | 메일 수신 확인 | SMTP `1025`, UI `8025` |
-| MariaDB | 관측 스터디에서의 DB 병목 실험 | `observability` 프로필 |
+| PostgreSQL | 채널 설정·발송 이력 저장, DB 병목 실험 | `localhost:5432` |
 
-앱은 Undertow 기반으로 `8092`에서 실행합니다. 채널 설정·발송 이력 저장소는 PostgreSQL입니다(2026-07-22 H2에서 전환). 관측 스터디의 DB 병목 실험용 MariaDB는 별도 profile로 남아 있습니다.
+앱은 Undertow 기반으로 `8092`에서 실행합니다. 채널 설정·발송 이력 저장소는 PostgreSQL입니다(2026-07-22 H2에서 전환). 관측 스터디의 DB 병목 실험(UC-07)도 이 PostgreSQL과 HikariCP 커넥션 풀을 대상으로 합니다.
 
 ### 3-1. WireMock — 외부 발송 API의 대역
 
@@ -102,7 +102,7 @@ flowchart LR
     KAFKA --> LSN["NotificationListener"]
     LSN --> SVC["NotificationSendService"]
     SVC --> CACHE["Caffeine"]
-    CACHE -. "miss" .-> H2[("H2")]
+    CACHE -. "miss" .-> PG[("PostgreSQL")]
     SVC --> FEIGN["OpenFeign + CircuitBreaker"]
     FEIGN --> WM["WireMock :8110"]
     LSN -. "retry exhausted" .-> DLT["notification.DLT"]
@@ -113,7 +113,7 @@ flowchart LR
 ```
 
 - 구현됨: Kafka 소비, 캐시 우선 설정 조회, WireMock 발송 호출, 회로 차단, 재시도·DLT 경로
-- 후속: 발송 이력 색인·조회, DLT 재처리, MariaDB 전환
+- 후속: 발송 이력 OpenSearch 색인(현재 PostgreSQL), DLT 재처리
 - 유스케이스별 상태: [UC 현황판](uc/00-index.md)
 
 ## 5. 관측 스터디 확장

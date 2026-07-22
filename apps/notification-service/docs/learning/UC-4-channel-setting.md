@@ -26,7 +26,7 @@
 flowchart LR
     subgraph OUT["infrastructure"]
         ADP["PersistenceAdapter<br>+ Entity + JpaRepository"]
-        DB[("H2<br>channel_setting")]
+        DB[("PostgreSQL<br>channel_setting")]
     end
     subgraph CORE["domain"]
         PIN["port/in<br>Get·Update UseCase"]
