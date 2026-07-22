@@ -29,7 +29,7 @@ flowchart TB
 
 ## Kafka 처리·재시도·DLT
 
-현재 구현은 인메모리 2회 재시도 뒤 DLT로 보냅니다. `notification.retry`는 Phase 3에서 추가할 목표 상태이며 점선으로 표시합니다.
+현재 구현은 인메모리 2회 재시도 뒤 DLT로 보냅니다. `notification.retry`는 3단계에서 추가할 목표 상태이며 점선으로 표시합니다.
 
 ```mermaid
 flowchart TB

@@ -25,7 +25,7 @@ DLT 또는 Consumer Lag가 증가하면 아래 순서로 조사합니다.
 3. Cache miss·DB latency가 증가했는지 확인합니다. 증가했다면 hit ratio, query latency, HikariCP active·pending을 확인합니다.
 4. 앞의 신호가 정상이라면 consumer concurrency, partition 수, skew, retry/backoff를 확인합니다.
 
-## Phase 3 관측 실험 UC
+## 3단계 관측 실험 UC
 
 번호는 쉽고 우선순위 높은 것부터의 진행 순서입니다(2026-07-21 재정렬). UC-09~11은 JVM 축으로, 외부 API·DB·consumer로 설명되지 않는 병목을 다루므로 기본 관측이 자리 잡은 뒤가 자연스럽습니다. 기능 UC(UC-1~5)와 구분해 관측 UC는 두 자리(UC-NN)로 표기합니다.
 
