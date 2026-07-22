@@ -1,2 +1,0 @@
--- MariaDB 초기 스키마 — Phase 3에서 H2 전환 시 작성 (TODO)
--- 예정 테이블: user_notification_channel_config (현 H2 ChannelSetting 대응)
