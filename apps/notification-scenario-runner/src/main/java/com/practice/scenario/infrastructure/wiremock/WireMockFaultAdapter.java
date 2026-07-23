@@ -42,6 +42,7 @@ public class WireMockFaultAdapter implements FaultInjectionPort {
                  "request": {"method": "POST", "urlPath": "/send/%s"},
                  "response": {"status": 200,
                               "fixedDelayMilliseconds": %d,
+                              "headers": {"Content-Type": "application/json"},
                               "jsonBody": {"statusCode": "202", "statusName": "delayed", "requestId": "scn-delay"}}}
                 """.formatted(channel, delayMs);
         registerStub(stub);
