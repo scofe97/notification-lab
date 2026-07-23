@@ -34,7 +34,7 @@ Kafka `notification` 소비(`@KafkaListener`) → 채널 설정 캐시(Caffeine)
 
 ## 3단계 — LGMT Observability 스터디 🔜
 
-`notification-service`는 관측 대상이고, `notification-scenario-runner`는 신호와 장애를 만드는 실험 발생기입니다. 3단계는 알림 기능을 더 만드는 단계가 아니라 지연·실패·DLT·캐시·DB 문제를 metric → log → trace 순서로 해석하는 스터디입니다.
+`notification-service`는 관측 대상이고, `notification-scenario-runner`는 신호와 장애를 만드는 실험 발생기입니다. runner는 단계 1(Kafka 발행)·2(WireMock 장애 제어)가 구현돼(2026-07-23) 관측 UC의 신호 주입 준비가 됐고, 이력·REST 제어(단계 3·4)는 스터디 진행 중 추가합니다. 3단계는 알림 기능을 더 만드는 단계가 아니라 지연·실패·DLT·캐시·DB 문제를 metric → log → trace 순서로 해석하는 스터디입니다.
 
 | 순서 | 주차 목표 | 산출물 |
 |------|-----------|--------|

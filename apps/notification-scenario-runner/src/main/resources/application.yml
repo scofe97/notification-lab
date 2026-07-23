@@ -6,6 +6,16 @@ spring:
     name: notification-scenario-runner
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9192}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+
+# 시나리오 대상 — notification-service의 소비 토픽과 WireMock admin
+scenario:
+  topic: ${SCENARIO_TOPIC:notification}
+  wiremock:
+    admin-url: ${SCENARIO_WIREMOCK_URL:http://localhost:8110}
 
 management:
   endpoints:

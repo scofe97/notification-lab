@@ -7,7 +7,7 @@
 | 대상 | 역할 | 상태 |
 |------|------|------|
 | `apps/notification-service` | Kafka 소비, 캐시·DB 조회, 외부 발송, CircuitBreaker 적용 | ✅ 기존 |
-| `apps/notification-scenario-runner` | 정상·burst·poison 발행, WireMock 장애 모드 전환, scenario history 기록 | 🟡 스캐폴딩 완료 |
+| `apps/notification-scenario-runner` | 정상·burst·poison 발행, WireMock 장애 모드 전환, scenario history 기록 | 🟡 단계 1·2 구현 (발행·장애 제어, 2026-07-23) — 이력·REST 제어는 단계 3·4 |
 | Kafka | `notification` 소비와 DLT 격리 | ✅ 기존 |
 | PostgreSQL | cache miss가 DB query·HikariCP 신호로 이어지는지 관측 | ✅ 기존 (앱 기본 DB) |
 | WireMock | 외부 API 200·5xx·timeout·delay 모사 | ✅ 기존 |
