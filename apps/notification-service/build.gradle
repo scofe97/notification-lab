@@ -44,6 +44,10 @@ dependencies {
 
     // ── 관측 (actuator: health·circuitbreakers 상태 조회) ──
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    // Actuator 만으로는 /actuator/prometheus 가 없습니다 — 레지스트리가 있어야
+    // Micrometer 가 Prometheus 노출 형식(text/plain; version=0.0.4)으로 냅니다.
+    // 노출은 application.yml 의 management.endpoints.web.exposure.include 가 따로 결정합니다.
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // ── 캐시 (Caffeine) ──
     implementation 'org.springframework.boot:spring-boot-starter-cache'

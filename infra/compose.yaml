@@ -8,3 +8,4 @@ include:
   - path: compose/mailhog.yaml
   - path: compose/wiremock.yaml
   - path: compose/observability.yaml
+  - path: compose/prometheus.yaml

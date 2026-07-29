@@ -1,0 +1,2 @@
+# node-exporter textfile collector 마운트 대상 (02-01 실습 C 묶음)
+# 여기에 .prom 파일을 두면 node-exporter 가 자기 /metrics 에 얹어 내보냅니다.
