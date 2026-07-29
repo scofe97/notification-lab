@@ -37,6 +37,8 @@ UC-1의 목표는 상류 시스템이 Kafka `notification` 토픽에 넣은 알�
 
 이 학습 단위는 알림 기능을 새로 구현하는 단계가 아닙니다. 이미 완료된 1단계의 발송 파이프라인을 대상으로, 왜 이 순서와 실패 처리가 필요한지 설명할 수 있게 만드는 단계입니다.
 
+
+
 ## 3. 증거 등급
 
 > 각 주장을 실행으로 본 것과 코드로 추론한 것으로 나눕니다. 이 구분이 없으면 "동작할 것이다"를 "동작한다"로 착각하고, 실패 경로를 운영 장애 때 처음 실측하게 됩니다.
@@ -52,6 +54,8 @@ UC-1의 목표는 상류 시스템이 Kafka `notification` 토픽에 넣은 알�
 | 같은 `(userId, channelType)` 재조회는 DB를 건너뛴다 | **확인됨** | 2026-07-20 실측 — 2번째 이벤트에 "캐시 미스" 로그 없음, 처리 250ms→54ms |
 | 외부 실패가 누적되면 CircuitBreaker가 OPEN으로 전이한다 | **수정 전 반증됨 → 수정 후 확인됨** | 2026-07-20 실측 — 수정 전에는 24건 연속 실패에도 차단 0회. `NotificationSendCaller` 분리 + AOP 스타터 추가 후 5건에서 OPEN, `notPermittedCalls: 6`, HALF_OPEN 회복까지 관측 |
 
+
+
 ## 4. Phase 1 · 맥락과 예측
 
 > 코드를 보기 전에 설계 의도를 예측합니다. 예측을 먼저 세워야 코드를 읽을 때 자기 생각과 대조하며 읽게 됩니다.
@@ -63,6 +67,8 @@ UC-1의 목표는 상류 시스템이 Kafka `notification` 토픽에 넣은 알�
 1. 알림 이벤트를 HTTP 요청이 아니라 Kafka 토픽으로 받으면, 발송 서비스는 무엇을 분리할 수 있습니까?
 2. 리스너가 예외를 잡아서 로그만 남기고 끝내면 Kafka 메시지에는 어떤 위험이 생깁니까?
 3. SMS와 EMAIL 수신자가 한 이벤트에 섞여 있을 때, 외부 발송 호출을 채널별로 묶는 이유는 무엇입니까?
+
+
 
 ## 5. Phase 2 · 정상 발송 흐름
 
@@ -108,6 +114,8 @@ flowchart LR
 [`NotificationSendCaller.callSend`](../../src/main/java/com/practice/notification/send/infrastructure/sendapi/NotificationSendCaller.java)는 채널 이름으로 경로를 정하고 Feign 클라이언트를 호출합니다. 성공하면 `SendResult`를 돌려주고, 리스너는 채널별 결과를 한 번의 완료 로그로 남깁니다. 이 메서드가 서비스가 아닌 별도 빈에 있는 이유는 아래 Phase 3에서 다룹니다.
 
 수동 E2E에서 확인된 것은 SMS·EMAIL 두 호출이 WireMock에 도달했다는 정상 경로입니다. 캐시 히트, 외부 실패, DLT 적재는 이 실행에서 확인되지 않았습니다.
+
+
 
 ## 6. Phase 3 · 실패와 경계 추적
 
@@ -170,6 +178,8 @@ sequenceDiagram
 Spring의 일반적인 프록시 AOP는 객체 내부 호출을 프록시 밖의 직접 호출로 처리하므로 조언을 적용하지 않습니다. [Spring AOP 문서](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html#spring-aop-proxying)도 self-invocation이 advice를 우회한다고 설명합니다. AspectJ weaving 설정도 없었으므로, 회로차단기가 실제 OPEN으로 전이한다는 주장을 그때는 **미검증**으로 두었습니다.
 
 읽는 순서에 주의합니다. 이 진단은 코드를 읽어 세운 가설입니다. 실측이 그것을 확정했고(24건 실패에도 차단 0회), 수정 뒤 재실험이 원인 귀속까지 증명했습니다(5건에서 OPEN). 가설과 관측과 확정을 뭉뚱그리지 않는 것이 이 문서의 규칙입니다.
+
+
 
 ## 7. 후속 검증
 

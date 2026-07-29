@@ -1,6 +1,10 @@
 # 관측 시나리오와 운영 절차
 
-장애 실험의 목적은 그래프를 늘리는 것이 아니라, 증상을 증거로 분해해 원인을 판단하는 것입니다. 각 실험은 재현 조건, metric·log·trace 증거, 원인 판단을 함께 기록합니다. DB 관련 실험은 PostgreSQL과 HikariCP 커넥션 풀을 대상으로 합니다.
+> 장애 실험의 목적은 그래프를 늘리는 것이 아니라, 증상을 증거로 분해해 원인을 판단하는 것입니다. 
+>
+> 각 실험은 재현 조건, metric·log·trace 증거, 원인 판단을 함께 기록합니다. DB 관련 실험은 PostgreSQL과 HikariCP 커넥션 풀을 대상으로 합니다.
+
+
 
 ## 장애 시나리오
 
@@ -16,6 +20,8 @@
 | 스레드 블로킹 | 외부 API delay 상태에서 listener 스레드 점유 관찰 | jvm_threads states(blocked/waiting), thread dump, 처리량 정체 | 동기 호출이 컨슈머 스레드를 묶는 구조 확인 |
 | OOM | heap 축소 + 대량 발행으로 OutOfMemoryError 유발 | OOM 로그·재시작, heap dump의 지배 객체 | heap dump로 원인 객체를 추적하는 절차 학습 |
 
+
+
 ## 장애 원인 추적 지도
 
 DLT 또는 Consumer Lag가 증가하면 아래 순서로 조사합니다. 앞 단계에서 원인이 잡히면 뒤로 내려가지 않습니다.
@@ -24,6 +30,8 @@ DLT 또는 Consumer Lag가 증가하면 아래 순서로 조사합니다. 앞 �
 2. Validation·Deserialization error가 증가했는지 확인합니다. 증가했다면 Loki에서 `failureReason`, topic, partition, offset을 확인합니다.
 3. Cache miss·PostgreSQL query latency가 증가했는지 확인합니다. 증가했다면 hit ratio, query latency, HikariCP active·pending을 확인합니다.
 4. 앞의 신호가 정상이라면 consumer concurrency, partition 수, skew, retry/backoff를 확인합니다.
+
+
 
 ## 3단계 관측 실험 UC
 
@@ -43,6 +51,8 @@ DLT 또는 Consumer Lag가 증가하면 아래 순서로 조사합니다. 앞 �
 | UC-10 | 스레드 블로킹 관찰 | jvm_threads states·thread dump·처리량 정체 | `10-thread-blocking.md` |
 | UC-11 | OOM·heap dump 분석 | OOM 로그·재시작·heap dump 지배 객체 | `11-oom-heap-dump.md` |
 | UC-12 | Loki label cardinality | stream 수·ingestion·query latency | `12-loki-label-cardinality.md` |
+
+
 
 ## 운영 결과물
 
