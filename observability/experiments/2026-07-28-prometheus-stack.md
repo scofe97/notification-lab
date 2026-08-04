@@ -2,6 +2,18 @@
 
 2026-07-28 · 《Mastering Prometheus》 2장(Prometheus 배포) Phase 3 실습 기록입니다.
 
+> ⚠️ **2026-08-04 이후 이 문서의 명령은 그대로 실행되지 않습니다.** 4장 실습에서 kube-prometheus-stack 을 kind 클러스터에 올리면서 compose 쪽 중복을 걷어냈습니다. 본문은 그날의 사실이므로 고치지 않고, 바뀐 것만 여기 적습니다.
+>
+> | 이 문서의 표기 | 지금 |
+> |---|---|
+> | `--profile prometheus` | `--profile pushgateway` (node-exporter·pushgateway 만) |
+> | `infra/compose/prometheus.yaml` | `infra/compose/pushgateway.yaml` |
+> | compose 의 `prometheus`·`alertmanager` | **없음** — kind 의 kube-prometheus-stack 으로 이동 |
+> | `infra/prometheus/`·`infra/alertmanager/` | **없음** — Operator 가 설정을 생성 |
+> | `--profile observability` 의 loki·mimir·tempo | **없음** — 실질 0줄 스텁이라 걷어냄. ROADMAP 3-2 에 되살림 |
+>
+> A·B 묶음(스택 4구성요소·Alertmanager 분리)은 이제 kind 쪽에서 재현합니다 — `infra/k8s/` 와 [2026-08-04 기록](2026-08-04-sd-relabeling.md). C 묶음(textfile·Pushgateway)은 `--profile pushgateway` 로 그대로 됩니다. helm 의 node-exporter 에는 `--collector.textfile.directory` 인자가 없어 compose 쪽을 남겼습니다.
+
 Phase 1 인출에서 다섯 축 중 둘이 미달이고 하나가 미해결로 남았습니다. 미달 둘의 뿌리는 **층 혼동**입니다 — 프로세스 층과 부품 층을 섞었고, Prometheus 스택과 LGTM 스택을 섞었습니다. 산문으로 다시 읽는 대신 **프로세스를 각각 띄워 보는 것**으로 교정합니다.
 
 | 인출 항목 | 결과 | 이 실습에서 겨누는 곳 |

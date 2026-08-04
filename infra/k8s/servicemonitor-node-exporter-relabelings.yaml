@@ -1,0 +1,83 @@
+# 04-01 문서 162행 블록 — Operator 오브젝트에 relabeling 을 적는 방식
+#
+# 정본: ~/runners-high/write/06_observability/book/mastering_prometheus/
+#       04-01.서비스 디스커버리와 relabeling.md  (579줄)
+#
+# 문서 162행 블록을 그대로 옮긴 것:
+#
+#   spec:
+#     endpoints:
+#       - port: http-metrics
+#         relabelings:                      # → relabel_configs 로 번역됨
+#           - sourceLabels: [__meta_kubernetes_service_label_jobLabel]
+#             targetLabel: job
+#         metricRelabelings:                # → metric_relabel_configs 로 번역됨
+#           - sourceLabels: [__name__]
+#             regex: node_scrape_collector_.*
+#             action: drop
+#
+# 문서 155~157행 대응표:
+#   relabel_configs         → relabelings         (스크레이프 전)
+#   metric_relabel_configs  → metricRelabelings   (스크레이프 후·저장 전)
+#
+# ⚠️ Operator 가 만든 kube-prom-prometheus-node-exporter 를 고치지 않고
+#    별도 SM 으로 둔다. helm 이 관리하는 오브젝트를 손으로 바꾸면
+#    다음 helm upgrade 에서 덮어써져 원인을 못 찾는다.
+#    대신 같은 Service 를 대상으로 삼아 job 이 하나 더 생기게 한다 —
+#    중복 스크레이프가 되지만, 그 대비가 이 단계의 관찰 대상이다.
+#
+# 확인할 것 셋:
+#   1. camelCase(sourceLabels) 가 snake_case(source_labels) 로 번역되는가
+#   2. 내가 쓴 규칙이 Operator 규칙 "뒤에" 붙는가 (문서 173행)
+#   3. metricRelabelings 의 drop 이 실제로 시계열을 줄이는가
+#
+# 반영: kubectl apply -f infra/k8s/servicemonitor-node-exporter-relabelings.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: node-exporter-relabelings-lab
+  namespace: mon-lab
+  labels:
+    lab: sd-relabeling
+
+spec:
+  # S1 에서 확인한 Operator SM 과 같은 Service 를 고른다(실측).
+  # 문서 83행 블록의 selector 와 동일하되 릴리스명만 다르다 —
+  # 문서는 mastering-prometheus, 우리는 kube-prom.
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: kube-prom
+      app.kubernetes.io/name: prometheus-node-exporter
+
+  namespaceSelector:
+    matchNames:
+      - mon-lab
+
+  endpoints:
+    - # 포트 "이름". 번호가 아니다 — 문서 104행이 그 이유를 적는다.
+      port: http-metrics
+      scheme: http
+
+      # ── 스크레이프 전 (문서 164~166행) ──
+      relabelings:
+        # 메타 라벨 값을 일반 라벨로 승격한다.
+        # Operator 가 이미 같은 일을 하는 규칙을 만들어 뒀으므로
+        # 이 규칙은 그 뒤에 붙어 같은 값을 다시 쓴다 — 결과는 같지만
+        # "내가 쓴 것이 뒤에 붙는다"는 사실을 설정 원문에서 확인할 수 있다.
+        - sourceLabels: [__meta_kubernetes_service_label_jobLabel]
+          targetLabel: job
+
+        # 문서에 없는 한 줄을 덧붙인다 — 내 규칙임을 설정 원문에서
+        # 눈으로 찾기 위한 표지다. 이 라벨이 붙은 job 이 내 것이다.
+        - targetLabel: lab_source
+          replacement: hand-written
+
+      # ── 스크레이프 후·저장 전 (문서 167~170행) ──
+      metricRelabelings:
+        # node_scrape_collector_* 계열을 버린다.
+        # node-exporter 가 collector 마다 duration_seconds·success 를 내므로
+        # collector 수 × 2 만큼 줄어든다. 적용 전후를 숫자로 비교한다.
+        - sourceLabels: [__name__]
+          regex: node_scrape_collector_.*
+          action: drop

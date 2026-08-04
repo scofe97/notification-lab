@@ -1,0 +1,124 @@
+# 04-01 문서 §8 — http_sd 엔드포인트 (문서 306·317행 블록의 실물)
+#
+# 정본: ~/runners-high/write/06_observability/book/mastering_prometheus/
+#       04-01.서비스 디스커버리와 relabeling.md  (579줄)
+#
+# 문서가 지킬 것 셋을 적는다:
+#   - HTTP 200 상태 코드
+#   - Content-Type: application/json 헤더
+#   - UTF-8 인코딩
+# 그리고 하나 더 — "보낼 타깃이 없을 때도 200 과 빈 배열 []" (문서 §8).
+#   오류로 답하면 Prometheus 가 갱신 실패로 읽고 직전 목록을 계속 쓴다.
+#
+# 문서 306행 블록(static config YAML)을 317행 블록(JSON)으로 옮긴 것이 응답이다.
+# 다만 문서의 web1.example.com:443 은 실재하지 않아 스크레이프가 실패하므로,
+# 이 클러스터에 실재하는 node-exporter 파드 IP 로 바꿨다(실측).
+# 그래야 "SD 는 목록만 주고 값은 각 앱이 낸다"가 UP 으로 확인된다.
+#
+# 반영: kubectl apply -f infra/k8s/http-sd-server.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: http-sd-targets
+  namespace: mon-lab
+data:
+  # 이 JSON 이 문서 317행 블록과 같은 모양이다 —
+  # 최상위는 배열, 각 원소는 targets(문자열 배열) + labels(객체).
+  targets.json: |
+    [{
+      "targets": [ "172.21.0.2:9100", "172.21.0.3:9100", "172.21.0.4:9100" ],
+      "labels": { "component": "node-exporter", "environment": "lab", "sd_source": "http_sd" }
+    }]
+
+  # nginx 설정 — 세 요구사항을 여기서 지킨다.
+  nginx.conf: |
+    server {
+      listen 8888;
+      # 문서 §8 요구사항 2·3: Content-Type 과 UTF-8
+      charset utf-8;
+
+      location /targets {
+        default_type application/json;
+        alias /usr/share/nginx/targets/targets.json;
+      }
+
+      # 문서 §8 의 "타깃이 없을 때도 200 과 빈 배열".
+      # 이 경로로 바꿔 붙이면 Prometheus 가 타깃을 전부 제거하는 것을 볼 수 있다.
+      # 오류(500)로 답하면 갱신 실패로 읽혀 옛 목록이 그대로 남는다 — 그 대비 실습용.
+      location /targets-empty {
+        default_type application/json;
+        return 200 '[]';
+      }
+
+      # 요구사항 2 위반 — JSON 자체는 유효하되 Content-Type 을 text/plain 으로 낸다.
+      # ⚠️ 미검증. 2026-08-04 회차에서 만들어만 두고 실행하지 않았다.
+      #    소스에 전용 실패 분기가 있어(discovery/http/http.go 의 matchContentType 검사)
+      #    거부될 것으로 보이나 실측하지 않았다 — 다음 회차 과제.
+      location /targets-badtype {
+        default_type text/plain;
+        alias /usr/share/nginx/targets/targets.json;
+      }
+
+      # 문서 §6 의 "모른다"(오류) 쪽 — 갱신 실패로 읽혀 직전 목록이 유지된다.
+      location /targets-error {
+        default_type application/json;
+        return 500 '{"error":"inventory unavailable"}';
+      }
+    }
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: http-sd
+  namespace: mon-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: http-sd
+  template:
+    metadata:
+      labels:
+        app: http-sd
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - name: http
+              containerPort: 8888
+          volumeMounts:
+            - name: conf
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: nginx.conf
+            - name: targets
+              mountPath: /usr/share/nginx/targets
+      volumes:
+        - name: conf
+          configMap:
+            name: http-sd-targets
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+        - name: targets
+          configMap:
+            name: http-sd-targets
+            items:
+              - key: targets.json
+                path: targets.json
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: http-sd
+  namespace: mon-lab
+spec:
+  selector:
+    app: http-sd
+  ports:
+    - name: http
+      port: 8888
+      targetPort: 8888
