@@ -1,34 +1,21 @@
+# 관측 스택 — Grafana + Alloy
+#
+# 2026-08-04 에 Loki·Mimir·Tempo 를 걷어냈습니다.
+# 셋 다 설정 파일이 주석만 있는 **실질 0줄 스텁**이라 기동 즉시 죽었습니다
+# (07-28 기록 292행: Mimir `Error parsing config file: EOF`,
+#  Tempo `unknown backend`, Loki `Config.Validate()` 패닉).
+# `--profile observability up` 은 그 시점에도 Grafana·Alloy 만 살아남았습니다.
+#
+# ROADMAP 3-2 주차(Actuator·Micrometer·OTel, Alloy)에 셋을 되살립니다.
+# 그때 설정을 채우면서 이 파일에 서비스를 다시 넣습니다 —
+# 빈 스텁을 미리 두는 것보다 필요할 때 함께 만드는 편이 낫습니다.
+#
+# 걷어낼 때 함께 지운 것: infra/loki/ · infra/mimir/ · infra/tempo/ (스텁 설정)
+# alloy/config.alloy 는 남겼습니다 — 3-2 주차 산출물 자리입니다(07-28 49행).
+
 services:
-  loki:
-    image: grafana/loki:3.1.0
-    container_name: nlab-loki
-    profiles: ["observability"]
-    ports:
-      - "3100:3100"
-    volumes:
-      - ../loki/loki-config.yml:/etc/loki/local-config.yaml:ro
-    command: ["-config.file=/etc/loki/local-config.yaml"]
-
-  mimir:
-    image: grafana/mimir:2.13.0
-    container_name: nlab-mimir
-    profiles: ["observability"]
-    ports:
-      - "9009:8080"
-    volumes:
-      - ../mimir/mimir-config.yml:/etc/mimir/mimir.yaml:ro
-    command: ["-config.file=/etc/mimir/mimir.yaml"]
-
-  tempo:
-    image: grafana/tempo:2.5.0
-    container_name: nlab-tempo
-    profiles: ["observability"]
-    ports:
-      - "3200:3200"
-    volumes:
-      - ../tempo/tempo-config.yml:/etc/tempo/tempo.yaml:ro
-    command: ["-config.file=/etc/tempo/tempo.yaml"]
-
+  # OTLP 수신구. config.alloy 가 아직 빈 스텁이라 파이프라인은 없습니다.
+  # 뜨기는 하되 아무것도 전달하지 않습니다 — 3-2 주차에 채웁니다.
   alloy:
     image: grafana/alloy:v1.3.0
     container_name: nlab-alloy
@@ -40,11 +27,10 @@ services:
     volumes:
       - ../alloy/config.alloy:/etc/alloy/config.alloy:ro
     command: ["run", "/etc/alloy/config.alloy", "--server.http.listen-addr=0.0.0.0:12345"]
-    depends_on:
-      - loki
-      - mimir
-      - tempo
 
+  # 대시보드. datasources.yml 의 LGTM 연결은 아직 주석입니다.
+  # kind 의 Prometheus 를 보려면 datasource 를 수동으로 추가하십시오
+  # (in-cluster 라 port-forward 주소를 씁니다).
   grafana:
     image: grafana/grafana:11.1.0
     container_name: nlab-grafana
@@ -56,7 +42,3 @@ services:
       GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
     volumes:
       - ../grafana/provisioning:/etc/grafana/provisioning:ro
-    depends_on:
-      - loki
-      - mimir
-      - tempo

@@ -1,0 +1,46 @@
+# 02-01 실습 — Pushgateway + textfile collector (push 축 vs pull 축 대비)
+#
+# 원래 이 파일은 prometheus.yaml 이었고 서비스 4개를 담았습니다.
+# 2026-08-04 에 prometheus·alertmanager 를 걷어냈습니다 — kube-prometheus-stack
+# 을 kind 클러스터에 올리면서 둘이 진짜로 중복됐기 때문입니다(아래 표).
+#
+# | compose (걷어낸 것)       | k8s (helm)                  |
+# |---------------------------|-----------------------------|
+# | prom/prometheus:v2.53.0   | prometheus:v3.13.1          |
+# | prom/alertmanager:v0.27.0 | alertmanager:v0.33.1        |
+#
+# node-exporter 는 **남겼습니다.** helm 이 올린 node-exporter 에는
+# `--collector.textfile.directory` 인자가 없어(실측) 02-01 C-2·C-3 의
+# textfile 실습을 대체하지 못합니다. 이름은 같지만 용도가 다릅니다.
+#
+# 실습 기록: observability/experiments/2026-07-28-prometheus-stack.md (C 묶음)
+# k8s 쪽 매니페스트: infra/k8s/
+#
+# ⛔ 스크레이프할 Prometheus 가 이 프로필에 없습니다.
+#    메트릭을 눈으로 보려면 각 엔드포인트를 직접 조회하거나
+#    (:9100/metrics · :9091/metrics), kind 의 Prometheus 를 쓰십시오.
+
+services:
+  # ── exporter — textfile collector 를 위해 남긴 것 ──
+  #    C-2: .prom 파일을 놓으면 node-exporter 가 자기 /metrics 에 이어 붙인다
+  #    C-3: 파일을 깨뜨려도 노드 메트릭은 정상 (node_textfile_scrape_error=1)
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    container_name: nlab-node-exporter
+    profiles: ["pushgateway"]
+    ports:
+      - "9100:9100"
+    volumes:
+      # C-2·C-3 용 textfile collector 디렉토리
+      - ../node-exporter/textfile:/var/lib/node_exporter/textfile:ro
+    command:
+      - "--collector.textfile.directory=/var/lib/node_exporter/textfile"
+
+  # ── C-5 전용: Pushgateway (push 축 — textfile 과 대비하려고 띄웁니다) ──
+  #    helm 차트는 Pushgateway 를 만들지 않으므로 여기가 유일한 자리입니다.
+  pushgateway:
+    image: prom/pushgateway:v1.9.0
+    container_name: nlab-pushgateway
+    profiles: ["pushgateway"]
+    ports:
+      - "9091:9091"

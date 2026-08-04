@@ -14,3 +14,6 @@ apps/*/.gradle/
 
 # 세션 인계용 임시 메모 (작업 끝나면 비우는 파일)
 .omc/
+
+# 외부 helm 차트 사본 (helm pull 로 재현 — 아래 명령은 실험 README 참조)
+**/_chart/
