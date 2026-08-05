@@ -1,0 +1,98 @@
+# 05-02 룰 단위 테스트 실습 — 테스트 정의
+#
+# 정본: ~/runners-high/write/06_observability/book/mastering_prometheus/
+#       05-02.견고한 알림과 룰 단위 테스트.md
+#
+# 검증 대상 두 가지
+#   (1) max_over_time 이 몇 분에 참이 되는가 — 문서 146행은 9분이라 적습니다.
+#       세션 중 손으로 센 값은 8분이었습니다. 어느 쪽인지 실측으로 확정합니다.
+#   (2) last_over_time 과의 발화 시점 차이 — 창 길이만큼 벌어지는지.
+#
+# input_series 는 문서 ②를 그대로 옮겼습니다.
+#   server1: "1 1 1 1 0+0x12" — 4분까지 성공, 그 뒤 실패
+#   server2: "1 1 1 _ 1+0x12" — 3분 성공, 한 번 결측(_), 그 뒤 계속 성공
+#
+# 확장 표기법: A+BxC 는 시작 값 A 뒤에 C 개가 더 붙어 총 C+1 개입니다.
+# 문서 §심화 학습이 원문의 개수 계산을 정정한 대목입니다.
+
+rule_files:
+  - ./test-rule.yaml
+
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'probe_success{instance="server1", job="blackbox_ssh"}'
+        values: "1 1 1 1 0+0x12"
+      - series: 'probe_success{instance="server2", job="blackbox_ssh"}'
+        values: "1 1 1 _ 1+0x12"
+
+    alert_rule_test:
+      # ── max_over_time 계열 ──────────────────────────────────
+      # 9분에는 아직 발화하지 않아야 합니다 (문서 ③ 단언).
+      - alertname: SSHDown
+        eval_time: 9m
+        exp_alerts: []
+
+      # 14분에 server1 만 발화. 라벨과 애노테이션을 전부 적으므로
+      # 템플릿 렌더 결과까지 단언 대상이 됩니다.
+      - alertname: SSHDown
+        eval_time: 14m
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              team: sre
+              instance: server1
+              job: blackbox_ssh
+            exp_annotations:
+              description: "Cannot SSH to server1"
+
+      # 12분 — 아직 발화 전이어야 합니다.
+      # 이것과 아래 13분 단언이 함께 통과하면 첫 발화가 13분으로 확정됩니다.
+      - alertname: SSHDown
+        eval_time: 12m
+        exp_alerts: []
+
+      # 13분 — 첫 발화 시점.
+      # 문서 146행은 14분이라 적지만 실측은 13분입니다
+      # (max_over_time 이 8분에 0 을 내기 시작 + for 5m).
+      - alertname: SSHDown
+        eval_time: 13m
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              team: sre
+              instance: server1
+              job: blackbox_ssh
+            exp_annotations:
+              description: "Cannot SSH to server1"
+
+      # ── last_over_time 계열 ─────────────────────────────────
+      # 창을 기다리지 않으므로 4분에 참이 되고 for 5m 을 채워 9분에 발화해야
+      # 합니다. 8분에는 아직 없어야 합니다.
+      - alertname: SSHDownLast
+        eval_time: 8m
+        exp_alerts: []
+
+      - alertname: SSHDownLast
+        eval_time: 9m
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              team: sre
+              instance: server1
+              job: blackbox_ssh
+            exp_annotations:
+              description: "Cannot SSH to server1"
+
+      - alertname: SSHDownLast
+        eval_time: 14m
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              team: sre
+              instance: server1
+              job: blackbox_ssh
+            exp_annotations:
+              description: "Cannot SSH to server1"

@@ -16,3 +16,4 @@
 | 2026-07-28 | [Prometheus 스택 기동](2026-07-28-prometheus-stack.md) | 스택 구성과 기동 실패 원인 |
 | 2026-08-04 | [서비스 디스커버리와 relabeling](2026-08-04-sd-relabeling.md) | 04-01 문서 블록 대조, relabeling 두 시점 |
 | 2026-08-05 | [Alertmanager 라우팅·억제](2026-08-05-alertmanager-routing.md) | 05-01 대조. 라벨 부재 매처 함정·억제 `equal` 겨냥 범위·도착 순서 무관 |
+| 2026-08-05 | [promtool 룰 단위 테스트](2026-08-05-promtool-unittest.md) | 05-02 대조. 원문의 발화 시점 계산이 한 칸 밀린 것을 실측으로 확인 |
