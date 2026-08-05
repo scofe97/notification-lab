@@ -1,0 +1,50 @@
+# 05-01 라우팅 실습 — amtool 판정 전용 (클러스터에 적용하지 않습니다)
+#
+# 정본: ~/runners-high/write/06_observability/book/mastering_prometheus/
+#       05-01.Alertmanager — 라우팅·그룹핑·억제·HA.md
+#
+# 검증 대상: 부정 매처(!= · !~)는 그 라벨이 아예 없는 알림을 걸러내지 못한다.
+# 없는 라벨과 빈 값을 Alertmanager 가 같게 취급하기 때문입니다.
+#
+# 실행 (파드 루트FS 가 읽기 전용이라 kubectl cp 대신 stdin 파이프):
+#   cat infra/k8s/alertmanager/routing-lab.yml | kubectl --context kind-k8s-lab \
+#     exec -i -n mon-lab alertmanager-kube-prom-kube-prometheus-alertmanager-0 \
+#     -c alertmanager -- sh -c 'cat > /alertmanager/lab.yml'
+#
+#   kubectl --context kind-k8s-lab exec -n mon-lab \
+#     alertmanager-kube-prom-kube-prometheus-alertmanager-0 -c alertmanager -- \
+#     amtool config routes test --config.file /alertmanager/lab.yml alertname=X
+#
+# ⚠️ v0.33.1 은 `amtool check-config` (하이픈). 문서 §7 의 `check config` 는
+#    v0.25.0 문법이라 여기서는 "expected command but got check" 로 실패합니다.
+# ⚠️ 빈 값은 namespace="" 로 인용해야 합니다. namespace= 는 파서가 거부하고
+#    classic 파서로 폴백해 경고를 냅니다.
+
+route:
+  receiver: "root"
+  routes:
+    # ── 1차 (실측 완료 2026-08-05) ───────────────────────────────
+    # 의도: "default 네임스페이스가 아닌 알림을 여기서 받자"
+    # 결과: 의도가 지켜지지 않았습니다.
+    #   (a) namespace=kube-system → has-namespace   의도대로
+    #   (b) namespace=default     → root            의도대로
+    #   (c) 라벨 없음             → has-namespace   ← 함정. 걸러지지 않음
+    #   (d) namespace=""          → has-namespace   ← (c) 와 동일
+    # (c) 와 (d) 가 같은 결과라는 것이 "없는 라벨 = 빈 값" 의 실증입니다.
+    #
+    # - receiver: "has-namespace"
+    #   matchers:
+    #     - "namespace != default"
+
+    # ── 2차 회피법 (지금 활성) ───────────────────────────────────
+    # 존재 확인 매처를 앞에 함께 겁니다.
+    # `.+` 는 "한 글자 이상" 이고 매처 정규식은 양쪽 끝이 앵커링되므로
+    # 빈 값(글자 0개)은 만족하지 못합니다.
+    - receiver: "has-namespace"
+      matchers:
+        - "namespace =~ .+"        # 라벨이 있고 값이 비어 있지 않을 것
+        - "namespace != default"   # 그중 default 는 제외
+
+receivers:
+  - name: "root"
+  - name: "has-namespace"
