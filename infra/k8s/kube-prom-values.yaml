@@ -1,0 +1,17 @@
+# kube-prometheus-stack 설치 시 기본값에서 바꾼 값만
+#
+# 릴리스 kube-prom · 네임스페이스 mon-lab · 차트 87.15.1
+# 재설치: helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
+#           --version 87.15.1 -n mon-lab -f infra/k8s/kube-prom-values.yaml
+# 현재값 확인: helm get values kube-prom -n mon-lab
+
+grafana:
+  # compose 쪽 Grafana 를 쓰므로 차트 것은 끕니다
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    # false 여야 Helm 이 만들지 않은 ServiceMonitor·PodMonitor 도 주워 갑니다
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    scrapeInterval: 15s

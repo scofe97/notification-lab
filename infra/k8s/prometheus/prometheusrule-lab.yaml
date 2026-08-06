@@ -1,0 +1,50 @@
+# 05-02 실습 — for 동작을 실물로 관측
+#
+# 정본: ~/runners-high/.../05-02.견고한 알림과 룰 단위 테스트.md
+# ⚠️ mon-lab 스택에 실제 적용됩니다. 되돌리기: kubectl delete -f <이 파일>
+#
+# Operator 조건(실측): ruleSelector = release:kube-prom · evaluationInterval = 30s
+# 재료: default/liveness-fail 파드가 CrashLoopBackOff 로 계속 재시작 중
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: lab-for-demo
+  namespace: mon-lab
+  labels:
+    release: kube-prom          # 없으면 Operator 가 무시합니다
+spec:
+  groups:
+    - name: lab-for-demo
+      rules:
+        # 대조군 — pending 을 거치지 않습니다
+        - alert: LabRestartNoFor
+          expr: |
+            increase(kube_pod_container_status_restarts_total{pod="liveness-fail"}[5m]) > 0
+          labels:
+            severity: info
+            team: lab
+          annotations:
+            description: "for 없음 — {{ $labels.pod }} 가 재시작 중입니다"
+
+        # 평가 4회를 거쳐야 firing
+        - alert: LabRestartWithFor
+          expr: |
+            increase(kube_pod_container_status_restarts_total{pod="liveness-fail"}[5m]) > 0
+          for: 2m
+          labels:
+            severity: warning
+            team: lab
+          annotations:
+            description: "for 2m — {{ $labels.pod }} 가 2분 넘게 재시작 중입니다"
+
+        # 평가 주기(30s)보다 짧아 무력한지 확인
+        - alert: LabRestartShortFor
+          expr: |
+            increase(kube_pod_container_status_restarts_total{pod="liveness-fail"}[5m]) > 0
+          for: 10s
+          labels:
+            severity: info
+            team: lab
+          annotations:
+            description: "for 10s — 평가 주기보다 짧아 무의미합니다"

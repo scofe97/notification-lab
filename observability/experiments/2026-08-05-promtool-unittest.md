@@ -192,8 +192,95 @@ Phase 1 질의응답에서 드러난 빈틈도 함께 메웠습니다.
 | 5분 lookback 이 있는데 왜 빈 결과인가 (stale 마커) | §"스크레이프 실패가 `for` 를 지운다" |
 | 빈 결과를 무엇으로 참·거짓 판정하는가 (비교 연산자가 걸러냄) | 같은 절 |
 
+## 이어서 — PrometheusRule CRD 로 실제 발화시키기 (2026-08-06)
+
+위 실습은 `promtool` 로 **계산만** 확인했습니다. 룰을 클러스터에 넣지 않았으므로 "선언 → Operator 반영 → 실제 발화" 경로는 밟지 않았습니다. 그 빈 구간을 채운 회차입니다.
+
+실습 파일: `infra/k8s/prometheus/prometheusrule-lab.yaml` (실습 후 삭제)
+
+### 설계
+
+같은 조건에 `for` 만 달리한 룰 셋을 두었습니다. 조건은 `default/liveness-fail` 파드의 재시작 카운터 증가로, 26일째 CrashLoopBackOff 라 항상 참입니다.
+
+| 룰 | `for` | 의도 |
+|---|---|---|
+| `LabRestartNoFor` | 없음 | 대조군 |
+| `LabRestartWithFor` | 2m | pending 구간을 눈으로 |
+| `LabRestartShortFor` | 10s | 평가 주기(30s)보다 짧음 |
+
+Operator 조건은 미리 조회해 확인했습니다. `ruleSelector` 가 `release: kube-prom` 이고 `ruleNamespaceSelector` 가 비어 있어, 라벨만 맞추면 스택 스펙을 건드리지 않고 CR 을 추가할 수 있었습니다.
+
+### 예측과 실제
+
+**예측** — 적용 직후 `NoFor` 만 firing, 1분 뒤 `ShortFor` 까지, 3분 뒤 셋 다. `ShortFor` 는 평가 주기보다 짧아 `NoFor` 와 사실상 같은 시점에 발화.
+
+**실제** — 예측대로였습니다.
+
+```
+[적용 2분 후]  FIRING (2)  PENDING (1)      [4분 후]  FIRING (3)
+  NoFor      firing                            NoFor      firing
+  WithFor    pending      ────────→            WithFor    firing
+  ShortFor   firing                            ShortFor   firing
+```
+
+### activeAt 이 셋 다 같습니다
+
+삭제 직전 기록입니다.
+
+```
+LabRestartNoFor      for=0    s  state=firing  activeAt=2026-08-06T00:58:36
+LabRestartWithFor    for=120  s  state=firing  activeAt=2026-08-06T00:58:36
+LabRestartShortFor   for=10   s  state=firing  activeAt=2026-08-06T00:58:36
+```
+
+**`activeAt` 은 조건이 참이 된 시각이지 발화한 시각이 아닙니다.** 셋이 같은 조건을 보므로 값이 일치하고, 그 뒤 `for` 만 발화 시점을 갈랐습니다. UI 에서 pending 과 firing 을 구분해 보지 않으면 이 차이가 드러나지 않습니다.
+
+### `for` 가 평가 주기보다 짧으면
+
+`ShortFor`(10s)가 `NoFor`(없음)와 끝까지 같은 상태였습니다. `evaluationInterval` 이 30s 이므로 조건이 참이 된 뒤 **다음 평가에서 곧바로** firing 이 됩니다. `10s` 든 `25s` 든 결과가 같아, 잠깐 튀는 값을 거르려는 목적이 달성되지 않습니다.
+
+문서 §2 가 "5분마다 평가하는 룰에 `for: 3m` 을 걸면 그 3분은 아무 일도 하지 않는다" 고 적은 그 함정입니다.
+
+### 적용·삭제 경로
+
+```
+kubectl apply → CR 생성
+             → Operator 가 rulefiles Secret 갱신
+             → config-reloader 가 Reload 트리거
+             → Prometheus 가 룰 로드 (UI 에 파일 경로가 보임)
+             → 조건 충족 → pending → firing
+```
+
+삭제는 반대 방향으로 같은 경로를 지납니다. CR 은 즉시 사라지지만 Prometheus API 에서 빠지기까지 몇십 초가 걸립니다. 그 사이 `kubectl get` 은 NotFound 인데 `/api/v1/rules` 에는 남아 있어, **두 곳의 상태가 잠시 어긋납니다.**
+
+### 부수 발견
+
+**Prometheus UI 는 룰 그룹을 페이지네이션합니다.** 그룹이 22개라 1·2·3 페이지로 나뉘고 `lab-for-demo` 는 2페이지에 있었습니다. 1페이지만 보고 "적용이 안 됐다" 고 판단하기 쉽습니다. 검색창(`?search=` 쿼리)을 쓰면 바로 걸립니다.
+
+**`keep_firing_for` 를 차트에서 발견했습니다.** kube-prometheus 기본 룰 상당수가 `for` 바로 아래 이 절을 답니다. `for` 가 발화 전 대기라면 이것은 조건이 거짓이 된 **뒤에도** firing 을 유지하는 시간이며, flapping 을 막습니다. 책에 없는 개념이라 정본 문서 §2 에 보강했습니다.
+
+**기본 룰이 저자의 경험칙을 따릅니다.** etcd 룰에서 같은 `alertname` 에 warning 은 `10m`, critical 은 `5m` 이 걸려 있습니다. 그리고 이 쌍은 `alertname` 이 같으므로 kube-prometheus 기본 억제 규칙(`equal: [namespace, alertname]`)이 실제로 걸립니다 — 앞 회차에서 `etcdInsufficientMembers` 와 `etcdMembersDown` 이 억제되지 않았던 것은 이름이 달랐기 때문입니다.
+
+### 문서 반영
+
+| 발견 | 반영 위치 |
+|---|---|
+| inactive·pending·firing 정의 없음 | §2 소절 신설. `inactive` 는 공식 용어가 아니라 UI·API 표현이라는 점도 명시 |
+| `keep_firing_for` | §2 소절 신설, 각주 1개 |
+| `for` 가 평가 주기보다 짧을 때 | §2 한 줄 보강 |
+| §관련 문서가 "용어집이 pending·firing 을 정의한다" 고 안내하나 실제로 없음 | 깨진 참조 수정 |
+
+## 참고 — 외부 차트 읽기
+
+`infra/k8s/_chart/` 에 kube-prometheus-stack 차트를 받아 두었습니다. Git 에서 제외되며(`.gitignore` 의 `**/_chart/*`, README 만 예외) 받는 법은 그 README 에 있습니다.
+
+기본 알림 룰은 `templates/prometheus/rules-1.14/` 에 주제별로 나뉘어 있고 `for` 가 290건 쓰여 있습니다. 다만 Helm 문법(`{{ dig "etcdMembersDown" "for" "20m" .Values.customRules }}`)에 싸여 있어, 값만 보려면 클러스터에서 렌더링된 결과를 받는 편이 낫습니다.
+
+설치 시 기본값에서 바꾼 값은 `infra/k8s/kube-prom-values.yaml` 에 두었습니다. 재현에 필요하므로 이쪽은 저장소에 포함합니다.
+
 ## 다음에 볼 것
 
-- `promtool check rules` 와 `test rules` 의 출력 차이 — 이번에는 `test rules` 만 돌렸습니다
+- `promtool check rules` 와 `test rules` 의 출력 차이 — 아직 `test rules` 만 돌렸습니다
 - `stale` 마커를 `input_series` 에 넣어 `_` 와 동작이 어떻게 갈리는지
-- `PrometheusRule` CRD 의 `spec.groups` 를 떼어 내 그대로 테스트 대상으로 삼기 — 12장(CI 파이프라인)과 이어집니다
+- `PrometheusRule` CRD 의 `spec.groups` 를 떼어 내 `promtool` 에 먹이기 — 12장(CI 파이프라인)과 이어집니다
+- `keep_firing_for` 를 실제로 걸어 flapping 이 덮이는지 관측
