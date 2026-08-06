@@ -1,0 +1,82 @@
+# notification-service — 이 실습의 스크레이프 대상 (전 경로의 출발점)
+#
+# 정본: ~/runners-high/write/06_observability/book/mastering_prometheus/
+#       05-01.Alertmanager — 라우팅·그룹핑·억제·HA.md
+#
+# application.yml 기본값이 localhost 라 env 로 클러스터 주소를 주입한다.
+# ⚠️ imagePullPolicy: IfNotPresent 필수 — 레지스트리에 없고 kind load 로 넣은
+#    이미지라, Always 면 ImagePullBackOff 로 죽는다(:latest 태그도 같은 이유로 회피).
+# ⚠️ 재빌드 시 kind load 후 rollout restart 필요 — 태그가 같으면 롤아웃이 안 걸린다.
+# ⚠️ Service 포트 이름 http 를 바꾸면 nlab-servicemonitor.yaml 도 같이 고쳐야 한다.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: nlab
+  labels:
+    app: notification-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: notification-service:lab
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8092
+          env:
+            # 의존성 주소 — 전부 클러스터 내부 Service
+            - name: NOTIFICATION_DB_URL
+              value: "jdbc:postgresql://postgres.nlab.svc.cluster.local:5432/notification"
+            - name: NOTIFICATION_DB_USER
+              value: "notification"
+            - name: NOTIFICATION_DB_PASSWORD
+              value: "notification-local"
+            - name: KAFKA_BOOTSTRAP
+              value: "kafka.nlab.svc.cluster.local:9094"
+            - name: NOTIFICATION_SEND_URL
+              value: "http://wiremock.nlab.svc.cluster.local:8110"
+            - name: NOTIFICATION_RECIPIENT_URL
+              value: "http://wiremock.nlab.svc.cluster.local:8110"
+          startupProbe:
+            # DB·Kafka 커넥션까지 붙어야 해서 넉넉히 준다 (최대 60초)
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 12
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            periodSeconds: 20
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: nlab
+  labels:
+    app: notification-service
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - name: http
+      port: 8092
+      targetPort: http

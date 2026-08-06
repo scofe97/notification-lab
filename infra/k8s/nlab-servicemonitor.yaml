@@ -1,0 +1,38 @@
+# ServiceMonitor — Operator 가 notification-service 를 스크레이프하게
+#
+# 정본: ~/runners-high/write/06_observability/book/mastering_prometheus/
+#       05-01.Alertmanager — 라우팅·그룹핑·억제·HA.md
+#       (relabeling 은 04-01.서비스 디스커버리와 relabeling.md)
+#
+# selector 비대칭이 이 파일의 관찰 대상 — SM 은 라벨이 필요 없는데(빈 {}),
+# PrometheusRule 은 release: kube-prom 이 있어야 한다. 같은 Operator 인데 다르다.
+# ⚠️ endpoints[].port 는 포트 번호가 아니라 Service 의 포트 "이름" 이다.
+#    어긋나면 SM 은 생성되고 /targets 에만 아무것도 안 뜬다 — 에러가 없다.
+# ⚠️ path 기본값은 /metrics — actuator 는 명시하지 않으면 404 를 긁는다.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: notification-service
+  namespace: nlab
+  labels:
+    app: notification-service
+spec:
+  namespaceSelector:
+    matchNames:
+      - nlab
+  selector:
+    # 파드가 아니라 Service 를 고른다
+    matchLabels:
+      app: notification-service
+  endpoints:
+    - port: http                    # Service 의 포트 이름
+      path: /actuator/prometheus    # actuator 는 /metrics 가 아니다
+      interval: 15s   # 기본 30s 면 rate() 창이 늦게 차 발화 관측이 어렵다
+      # relabelings → relabel_configs 로 번역됨 (04-01 문서 대응표).
+      # 여기 둘만 내가 쓴 것이고, namespace·service·container 등은 Operator 가
+      # 번역하며 자동으로 넣는다 (생성물은 파드의 config_out/prometheus.env.yaml).
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - targetLabel: job
+          replacement: notification-service

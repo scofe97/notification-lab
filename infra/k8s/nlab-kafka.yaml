@@ -1,0 +1,103 @@
+# kafka (KRaft 단일 노드) — notification-service 의 리스너 대상
+#
+# 정본: ~/runners-high/write/06_observability/book/mastering_prometheus/
+#       05-01.Alertmanager — 라우팅·그룹핑·억제·HA.md
+#
+# compose 판에서 EXTERNAL 리스너를 뺐다 — 클러스터 안 앱이 유일한 소비자고,
+# kind 로 외부를 열면 advertised 주소와 실제 경로가 어긋나기 쉽다.
+# ⚠️ advertised 는 클러스터 DNS FQDN 이어야 한다. 틀리면 부트스트랩만 되고
+#    produce/consume 이 조용히 실패한다 (readinessProbe 주석의 순환도 같은 계열).
+# ⚠️ emptyDir — 로그·오프셋 휘발. 토픽은 auto-create 라 미리 만들지 않는다.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  namespace: nlab
+  labels:
+    app: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: kafka
+          image: apache/kafka:3.8.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: internal
+              containerPort: 9094
+            - name: controller
+              containerPort: 9093
+          env:
+            - name: KAFKA_NODE_ID
+              value: "0"
+            - name: KAFKA_PROCESS_ROLES
+              value: "controller,broker"
+            - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+              # 자기 자신이 유일한 controller (compose 는 0@kafka:9093)
+              value: "0@localhost:9093"
+            - name: KAFKA_LISTENERS
+              value: "PLAINTEXT://:9094,CONTROLLER://:9093"
+            - name: KAFKA_ADVERTISED_LISTENERS
+              # 클라이언트가 재접속에 쓰는 주소
+              value: "PLAINTEXT://kafka.nlab.svc.cluster.local:9094"
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+            - name: KAFKA_CONTROLLER_LISTENER_NAMES
+              value: "CONTROLLER"
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "PLAINTEXT"
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+              value: "1"
+            - name: KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS
+              value: "0"
+            - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+              value: "true"
+            - name: KAFKA_LOG_DIRS
+              value: "/var/lib/kafka/data"
+          readinessProbe:
+            # ⚠️ kafka-topics.sh 로 쓰면 순환에 빠진다 (실측: 17분간 0/1).
+            #    프로브가 advertised 주소(Service ClusterIP)로 재접속하는데,
+            #    Service 는 Ready 한 파드만 엔드포인트에 넣는다 →
+            #    프로브 통과해야 Ready, Ready 여야 프로브 통과.
+            #    브로커 로그는 "Kafka Server started" 로 멀쩡해 원인이 안 보이고,
+            #    증상은 advertised 오설정과 똑같아 보인다 (주소는 맞았다).
+            #    tcpSocket 이 고리를 끊는다 — 한 번 Ready 가 되면 그다음은 정상.
+            tcpSocket:
+              port: internal
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 12
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/kafka/data
+
+      # ── 볼륨 (PVC 이관 지점) — emptyDir 자리에 persistentVolumeClaim 을 넣는다
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: nlab
+  labels:
+    app: kafka
+spec:
+  selector:
+    app: kafka
+  ports:
+    - name: internal
+      port: 9094
+      targetPort: internal

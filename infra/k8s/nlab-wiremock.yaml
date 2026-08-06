@@ -1,0 +1,110 @@
+# wiremock — 발송 API·수신자 조회 API 모사 (클러스터 내 배치)
+#
+# 정본: ~/runners-high/write/06_observability/book/mastering_prometheus/
+#       05-01.Alertmanager — 라우팅·그룹핑·억제·HA.md
+#
+# compose 의 볼륨 마운트(infra/wiremock)를 ConfigMap 으로 옮긴 것. 8K 라 여유.
+# 응답을 500 으로 바꾸면 앱이 502(ALL_FAILED)를 내 알림 발화 트리거가 된다.
+# ⚠️ --global-response-templating 필수 — 없으면 {{randomValue}} 가 치환 안 된다.
+# ⚠️ 두 mapping 의 JSON 형식이 다르다(래퍼 유무). 원본 그대로라 통일하지 않는다.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wiremock-mappings
+  namespace: nlab
+data:
+  send-success.json: |
+    {
+      "mappings": [
+        {
+          "name": "발송 성공 (SMS/알림톡/메일 공통)",
+          "request": {
+            "method": "POST",
+            "urlPathPattern": "/send/(sms|alimtalk|email)"
+          },
+          "response": {
+            "status": 200,
+            "headers": { "Content-Type": "application/json" },
+            "jsonBody": {
+              "statusCode": "202",
+              "statusName": "success",
+              "requestId": "{{randomValue type='UUID'}}"
+            }
+          }
+        }
+      ]
+    }
+  recipients.json: |
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/recipients/[A-Za-z0-9-]+"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": [
+          { "userId": "user-1", "channelType": "SMS", "destination": "01000000001" },
+          { "userId": "user-2", "channelType": "EMAIL", "destination": "user-2@example.local" },
+          { "userId": "user-3", "channelType": "SMS", "destination": "01000000003" }
+        ]
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wiremock
+  namespace: nlab
+  labels:
+    app: wiremock
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wiremock
+  template:
+    metadata:
+      labels:
+        app: wiremock
+    spec:
+      containers:
+        - name: wiremock
+          image: wiremock/wiremock:3.9.1
+          imagePullPolicy: IfNotPresent
+          args: ["--global-response-templating", "--verbose"]
+          ports:
+            - name: http
+              containerPort: 8080   # compose 는 8110:8080 으로 포워딩
+          readinessProbe:
+            httpGet:
+              path: /__admin/mappings
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 10
+          volumeMounts:
+            - name: mappings
+              # 기동 시 읽으므로 ConfigMap 을 바꾸면 rollout restart 가 필요하다
+              mountPath: /home/wiremock/mappings
+      volumes:
+        - name: mappings
+          configMap:
+            name: wiremock-mappings
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wiremock
+  namespace: nlab
+  labels:
+    app: wiremock
+spec:
+  selector:
+    app: wiremock
+  ports:
+    - name: http
+      port: 8110   # compose 호스트 포트와 맞춰 혼동을 줄인다
+      targetPort: http

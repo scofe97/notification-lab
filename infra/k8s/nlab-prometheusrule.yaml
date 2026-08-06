@@ -1,0 +1,100 @@
+# PrometheusRule — 오류율·지연 알림 룰
+#
+# 정본: ~/runners-high/write/06_observability/book/mastering_prometheus/
+#       05-01.Alertmanager — 라우팅·그룹핑·억제·HA.md
+#
+# ⚠️ release: kube-prom 라벨이 이 파일에서 가장 중요한 한 줄이다.
+#    ruleSelector 가 이 라벨을 요구한다(SM 쪽은 빈 {} 라 불필요 — 비대칭).
+#    없으면 kubectl 에는 보이는데 /api/v1/rules 에만 안 뜬다. 에러도 없다.
+#    helm 소유권 표시가 아니라 Prometheus 가 룰을 고르는 열쇠일 뿐이다.
+# ⚠️ 분모에서 actuator 를 뺀다 — 프로브·스크레이프가 200 을 계속 쌓아
+#    5xx 비율이 희석되면 실습 시간 안에 임계를 못 넘는다.
+# ⚠️ for 가 짧다(1m). 관측 창이 분 단위라 그렇고, 운영이면 이렇게 안 둔다.
+# 두 룰의 alertname 을 나눈 이유: 기본 억제는 equal:[namespace, alertname] 이라
+# 이름이 같아야 억제된다. 지금은 둘 다 뜨는 것을 먼저 보려고 이름을 갈랐다.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: notification-service-rules
+  namespace: nlab
+  labels:
+    release: kube-prom   # ⚠️ 없으면 룰이 조용히 사라진다
+    app: notification-service
+spec:
+  groups:
+    - name: notification-service.errors
+      interval: 15s
+      rules:
+        - alert: NotificationServiceHighErrorRate
+          # ⚠️ sum by (namespace, job) — 그냥 sum() 이면 모든 라벨이 사라진다.
+          #    그러면 알림에 alertname·severity 만 남고, Operator 가 라우트에
+          #    붙인 namespace="nlab" 매처를 통과 못 해 receiver: null 로 빠진다.
+          #    룰은 firing 인데 메일만 안 오는 상태가 된다 (실측으로 겪음).
+          expr: |
+            (
+              sum by (namespace, job) (rate(http_server_requests_seconds_count{job="notification-service",uri!~"/actuator.*",status=~"5.."}[2m]))
+              /
+              sum by (namespace, job) (rate(http_server_requests_seconds_count{job="notification-service",uri!~"/actuator.*"}[2m]))
+            ) > 0.1
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "notification-service 5xx 비율이 10%를 넘었습니다"
+            description: "최근 2분간 앱 API 의 5xx 비율이 {{ $value | humanizePercentage }} 입니다 (actuator 제외)."
+
+        # 아래 두 룰은 alert 이름이 같다 — group_wait 분할 발송 관측용이다.
+        # AlertmanagerConfig 의 groupBy 가 [namespace, alertname] 이므로 이름이
+        # 같으면 한 그룹이 되고, 룰이 둘이라 알림은 두 개가 된다. 호출 시점을
+        # 어긋나게 하면 같은 그룹에 시차를 두고 알림이 들어온다.
+        #
+        # 왜 uri 하나짜리 룰을 둘로 나눴나 — 실측 응답시간이 10배 차이 나서다.
+        #   /api/history                 36~42ms
+        #   /api/users/.../channels/...   3.9ms
+        # 하나의 임계로는 둘 다 못 잡는다. 낮추면 전부 발화해 룰 구실을 잃고,
+        # 높이면 하나만 걸려 알림이 한 개뿐이라 분할 발송을 볼 수 없다.
+        #
+        # ⚠️ 임계는 실습용으로 맞춘 값이다. 운영이라면 엔드포인트마다 SLO 를
+        #    따로 두는 것 자체는 정상이지만, 이렇게 낮게 잡지는 않는다.
+        - alert: NotificationServiceSlowResponse
+          expr: |
+            (
+              sum by (namespace, job, uri) (rate(http_server_requests_seconds_sum{job="notification-service",uri="/api/history"}[2m]))
+              /
+              sum by (namespace, job, uri) (rate(http_server_requests_seconds_count{job="notification-service",uri="/api/history"}[2m]))
+            ) > 0.02
+          # 30s — 첫 발화를 앞당긴다. 호출 시차는 for 가 각 시계열에 똑같이
+          # 걸리므로 그대로 보존된다.
+          for: 30s
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.uri }} 평균 응답시간이 20ms 를 넘었습니다"
+            description: "최근 2분간 {{ $labels.uri }} 평균 응답시간이 {{ $value }}초 입니다."
+
+        - alert: NotificationServiceSlowResponse
+          expr: |
+            (
+              sum by (namespace, job, uri) (rate(http_server_requests_seconds_sum{job="notification-service",uri="/api/users/{userId}/channels/{channelType}"}[2m]))
+              /
+              sum by (namespace, job, uri) (rate(http_server_requests_seconds_count{job="notification-service",uri="/api/users/{userId}/channels/{channelType}"}[2m]))
+            ) > 0.002
+          for: 30s
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.uri }} 평균 응답시간이 2ms 를 넘었습니다"
+            description: "최근 2분간 {{ $labels.uri }} 평균 응답시간이 {{ $value }}초 입니다."
+
+    - name: notification-service.availability
+      interval: 15s
+      rules:
+        - alert: NotificationServiceDown
+          # 앱을 죽이면 1분 안에 뜨므로 알림 경로 점검용으로도 쓴다
+          expr: up{job="notification-service"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "notification-service 스크레이프가 실패하고 있습니다"
+            description: "{{ $labels.pod }} 를 1분 이상 스크레이프하지 못했습니다."

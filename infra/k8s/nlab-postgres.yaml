@@ -1,0 +1,73 @@
+# postgres — notification-service 의 JPA 대상 (클러스터 내 배치)
+#
+# 정본: ~/runners-high/write/06_observability/book/mastering_prometheus/
+#       05-01.Alertmanager — 라우팅·그룹핑·억제·HA.md
+#
+# 값은 infra/compose/postgres.yaml 과 동일 (DB·user=notification).
+# ⚠️ emptyDir — 파드가 죽으면 데이터 소멸. ddl-auto=update 라 스키마는 앱이 복원.
+#    영속이 필요하면 맨 아래 "볼륨" 블록만 PVC 로 교체한다.
+# ⚠️ 비밀번호 평문 — public repo 라 로컬 학습용 더미만 쓴다. 실제는 Secret (NFR-5).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: nlab
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: notification
+            - name: POSTGRES_USER
+              value: notification
+            - name: POSTGRES_PASSWORD
+              value: notification-local
+            # alpine 이미지의 initdb 가 로케일 경고를 내지 않게
+            - name: POSTGRES_INITDB_ARGS
+              value: "--encoding=UTF8"
+          readinessProbe:
+            # 없으면 앱이 먼저 떠서 커넥션 실패로 CrashLoop 에 빠질 수 있다.
+            exec:
+              command: ["pg_isready", "-U", "notification", "-d", "notification"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 10
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+
+      # ── 볼륨 (PVC 이관 지점) — emptyDir 자리에 persistentVolumeClaim 을 넣는다
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: nlab
+  labels:
+    app: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres

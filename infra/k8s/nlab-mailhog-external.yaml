@@ -1,0 +1,47 @@
+# mailhog — 클러스터 밖(compose)의 SMTP 를 클러스터 이름으로 부르기
+#
+# 정본: ~/runners-high/write/06_observability/book/mastering_prometheus/
+#       05-01.Alertmanager — 라우팅·그룹핑·억제·HA.md
+#
+# 경로는 뚫려 있지만(노드→192.168.65.254:1025) 파드는 클러스터 DNS 만 봐서
+# host.docker.internal 이 안 풀린다. ExternalName 도 같은 이유로 기각.
+# 그래서 이름은 클러스터 안에 만들고 환경 의존 IP 는 이 파일에만 둔다.
+# ⚠️ IP 는 Docker Desktop VM 게이트웨이 — 환경 바뀌면 아래 addresses 만 고친다.
+#    확인: docker exec k8s-lab-worker getent hosts host.docker.internal
+# ⚠️ 수동 EndpointSlice 는 라벨(kubernetes.io/service-name)·addressType·포트 이름이
+#    Service 와 맞아야 한다. 어긋나면 조용히 비고 SMTP 만 실패한다. 적용 후 확인:
+#      kubectl get endpointslice -n nlab -l kubernetes.io/service-name=mailhog
+# ⚠️ selector 를 쓰면 컨트롤러가 손으로 쓴 EndpointSlice 를 지운다.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mailhog
+  namespace: nlab
+  labels:
+    app: mailhog
+spec:
+  # selector 없음 — 대상이 클러스터 밖이라 고를 파드가 없다
+  ports:
+    - name: smtp
+      port: 1025
+      targetPort: 1025
+      protocol: TCP
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: mailhog-manual
+  namespace: nlab
+  labels:
+    # Service 와 EndpointSlice 를 잇는 유일한 끈
+    kubernetes.io/service-name: mailhog
+addressType: IPv4
+ports:
+  - name: smtp
+    port: 1025
+    protocol: TCP
+endpoints:
+  - addresses:
+      - "192.168.65.254"   # 호스트 게이트웨이 (compose MailHog)
+    conditions:
+      ready: true
